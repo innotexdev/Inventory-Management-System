@@ -36,16 +36,71 @@ type SeedUser = {
 
 const USERS: SeedUser[] = [
   { firstName: "Ada", lastName: "Admin", email: "admin@company.com", role: "ADMIN" },
-  { firstName: "Mia", lastName: "Frontend", email: "mia.frontend@company.com", role: "MANAGER", team: "Frontend" },
-  { firstName: "Omar", lastName: "Backend", email: "omar.backend@company.com", role: "MANAGER", team: "Backend" },
-  { firstName: "Finn", lastName: "Fe", email: "finn.fe@company.com", role: "EMPLOYEE", team: "Frontend" },
-  { firstName: "Sara", lastName: "Fe", email: "sara.fe@company.com", role: "EMPLOYEE", team: "Frontend" },
-  { firstName: "Leo", lastName: "Fe", email: "leo.fe@company.com", role: "EMPLOYEE", team: "Frontend" },
-  { firstName: "Nina", lastName: "Be", email: "nina.be@company.com", role: "EMPLOYEE", team: "Backend" },
-  { firstName: "Tom", lastName: "Be", email: "tom.be@company.com", role: "EMPLOYEE", team: "Backend" },
-  { firstName: "Ivy", lastName: "Design", email: "ivy.design@company.com", role: "EMPLOYEE", team: "Design" },
+  {
+    firstName: "Mia",
+    lastName: "Frontend",
+    email: "mia.frontend@company.com",
+    role: "MANAGER",
+    team: "Frontend",
+  },
+  {
+    firstName: "Omar",
+    lastName: "Backend",
+    email: "omar.backend@company.com",
+    role: "MANAGER",
+    team: "Backend",
+  },
+  {
+    firstName: "Finn",
+    lastName: "Fe",
+    email: "finn.fe@company.com",
+    role: "EMPLOYEE",
+    team: "Frontend",
+  },
+  {
+    firstName: "Sara",
+    lastName: "Fe",
+    email: "sara.fe@company.com",
+    role: "EMPLOYEE",
+    team: "Frontend",
+  },
+  {
+    firstName: "Leo",
+    lastName: "Fe",
+    email: "leo.fe@company.com",
+    role: "EMPLOYEE",
+    team: "Frontend",
+  },
+  {
+    firstName: "Nina",
+    lastName: "Be",
+    email: "nina.be@company.com",
+    role: "EMPLOYEE",
+    team: "Backend",
+  },
+  {
+    firstName: "Tom",
+    lastName: "Be",
+    email: "tom.be@company.com",
+    role: "EMPLOYEE",
+    team: "Backend",
+  },
+  {
+    firstName: "Ivy",
+    lastName: "Design",
+    email: "ivy.design@company.com",
+    role: "EMPLOYEE",
+    team: "Design",
+  },
   // Deactivated: holds nothing, but keeps past assignments (history stays readable).
-  { firstName: "Zoe", lastName: "Design", email: "zoe.design@company.com", role: "EMPLOYEE", team: "Design", isActive: false },
+  {
+    firstName: "Zoe",
+    lastName: "Design",
+    email: "zoe.design@company.com",
+    role: "EMPLOYEE",
+    team: "Design",
+    isActive: false,
+  },
   // Active with no team and no items: exercises the "No team" group + empty state.
   { firstName: "Max", lastName: "Noteam", email: "max.noteam@company.com", role: "EMPLOYEE" },
 ];
@@ -111,22 +166,50 @@ const ITEM_NAMES: Record<string, Array<{ name: string; brand: string; model: str
 
 // 24 ASSIGNED (3 per category) + 16 others = 40 items.
 const OTHER_STATUSES = [
-  "AVAILABLE", "AVAILABLE", "AVAILABLE", "AVAILABLE", "AVAILABLE",
-  "AVAILABLE", "AVAILABLE", "AVAILABLE", "AVAILABLE", "AVAILABLE",
-  "AVAILABLE", "IN_REPAIR", "IN_REPAIR", "IN_REPAIR", "RETIRED", "RETIRED",
+  "AVAILABLE",
+  "AVAILABLE",
+  "AVAILABLE",
+  "AVAILABLE",
+  "AVAILABLE",
+  "AVAILABLE",
+  "AVAILABLE",
+  "AVAILABLE",
+  "AVAILABLE",
+  "AVAILABLE",
+  "AVAILABLE",
+  "IN_REPAIR",
+  "IN_REPAIR",
+  "IN_REPAIR",
+  "RETIRED",
+  "RETIRED",
 ] as const;
 
 // Holder emails for the 24 assigned items, in order. finn.fe holds 6 (5+).
 const HOLDER_ORDER = [
-  "finn.fe@company.com", "finn.fe@company.com", "finn.fe@company.com",
-  "finn.fe@company.com", "finn.fe@company.com", "finn.fe@company.com",
-  "sara.fe@company.com", "sara.fe@company.com", "sara.fe@company.com", "sara.fe@company.com",
-  "leo.fe@company.com", "leo.fe@company.com", "leo.fe@company.com",
-  "nina.be@company.com", "nina.be@company.com", "nina.be@company.com",
-  "tom.be@company.com", "tom.be@company.com",
-  "ivy.design@company.com", "ivy.design@company.com",
-  "mia.frontend@company.com", "mia.frontend@company.com",
-  "omar.backend@company.com", "omar.backend@company.com",
+  "finn.fe@company.com",
+  "finn.fe@company.com",
+  "finn.fe@company.com",
+  "finn.fe@company.com",
+  "finn.fe@company.com",
+  "finn.fe@company.com",
+  "sara.fe@company.com",
+  "sara.fe@company.com",
+  "sara.fe@company.com",
+  "sara.fe@company.com",
+  "leo.fe@company.com",
+  "leo.fe@company.com",
+  "leo.fe@company.com",
+  "nina.be@company.com",
+  "nina.be@company.com",
+  "nina.be@company.com",
+  "tom.be@company.com",
+  "tom.be@company.com",
+  "ivy.design@company.com",
+  "ivy.design@company.com",
+  "mia.frontend@company.com",
+  "mia.frontend@company.com",
+  "omar.backend@company.com",
+  "omar.backend@company.com",
 ];
 
 function daysAgo(n: number): Date {
@@ -198,11 +281,11 @@ async function main() {
   const repairItems: Array<{ id: string }> = [];
 
   for (const categoryName of CATEGORIES.map((c) => c.name)) {
-    const specs = ITEM_NAMES[categoryName]!;
+    const specs = ITEM_NAMES[categoryName];
     for (let i = 0; i < specs.length; i++) {
-      const spec = specs[i]!;
+      const spec = specs[i];
       const isAssignedSlot = i < 3;
-      const status = isAssignedSlot ? "ASSIGNED" : OTHER_STATUSES[otherIdx++]!;
+      const status = isAssignedSlot ? "ASSIGNED" : OTHER_STATUSES[otherIdx++];
       const item = await prisma.item.create({
         data: {
           name: spec.name,
@@ -210,7 +293,10 @@ async function main() {
           brand: spec.brand,
           model: spec.model,
           // Serials on a subset only, so both paths (with/without) are exercised.
-          serialNumber: serialIdx % 2 === 0 ? `SN-${categoryName.slice(0, 2).toUpperCase()}-${serialIdx}` : undefined,
+          serialNumber:
+            serialIdx % 2 === 0
+              ? `SN-${categoryName.slice(0, 2).toUpperCase()}-${serialIdx}`
+              : undefined,
           status,
           purchaseDate: status === "RETIRED" ? daysAgo(900) : daysAgo(100 + serialIdx),
           notes: status === "IN_REPAIR" ? "Screen flickers, sent for repair" : undefined,
@@ -219,7 +305,7 @@ async function main() {
       serialIdx++;
 
       if (status === "ASSIGNED") {
-        const holderEmail = HOLDER_ORDER[holderIdx++]!;
+        const holderEmail = HOLDER_ORDER[holderIdx++];
         await prisma.assignment.create({
           data: {
             itemId: item.id,
@@ -238,7 +324,7 @@ async function main() {
   }
 
   // History: first assigned item gets 3 past holders + current holder.
-  const historyItem = assignedItems[0]!;
+  const historyItem = assignedItems[0];
   const pastHolders: Array<{ email: string; from: number; to: number }> = [
     { email: "zoe.design@company.com", from: 90, to: 60 },
     { email: "nina.be@company.com", from: 59, to: 30 },
@@ -260,14 +346,18 @@ async function main() {
 
   // 6 more returned rows on other assigned items.
   const extraPast = [
-    "omar.backend@company.com", "tom.be@company.com", "ivy.design@company.com",
-    "mia.frontend@company.com", "nina.be@company.com", "zoe.design@company.com",
+    "omar.backend@company.com",
+    "tom.be@company.com",
+    "ivy.design@company.com",
+    "mia.frontend@company.com",
+    "nina.be@company.com",
+    "zoe.design@company.com",
   ];
   for (let i = 0; i < extraPast.length; i++) {
     await prisma.assignment.create({
       data: {
-        itemId: assignedItems[i + 1]!.id,
-        userId: userByEmail.get(extraPast[i]!)!,
+        itemId: assignedItems[i + 1].id,
+        userId: userByEmail.get(extraPast[i])!,
         assignedById: adminId,
         assignedAt: daysAgo(50 + i * 5),
         returnedAt: daysAgo(40 + i * 5),
@@ -280,7 +370,7 @@ async function main() {
   // unassigned, then moved — all legal transitions).
   await prisma.assignment.create({
     data: {
-      itemId: retiredItems[0]!.id,
+      itemId: retiredItems[0].id,
       userId: userByEmail.get("sara.fe@company.com")!,
       assignedById: miaId,
       assignedAt: daysAgo(300),
@@ -290,7 +380,7 @@ async function main() {
   });
   await prisma.assignment.create({
     data: {
-      itemId: repairItems[0]!.id,
+      itemId: repairItems[0].id,
       userId: userByEmail.get("nina.be@company.com")!,
       assignedById: omarId,
       assignedAt: daysAgo(60),

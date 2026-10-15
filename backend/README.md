@@ -35,7 +35,7 @@ API: `http://localhost:5000` — health: `http://localhost:5000/api/health`
 | Command              | What it does                               |
 | -------------------- | ------------------------------------------ |
 | `npm run dev`        | Start with hot reload (`tsx watch`)        |
-| `npm run build`      | Generate Prisma client + compile to `dist`|
+| `npm run build`      | Generate Prisma client + compile to `dist` |
 | `npm start`          | Run the compiled server                    |
 | `npm run db:migrate` | Apply migrations (`prisma migrate dev`)    |
 | `npm run db:seed`    | Seed data (`tsx prisma/seed.ts`)           |
@@ -54,19 +54,19 @@ See `.env.example`. Variables: `PORT`, `DATABASE_URL`, `LOG_LEVEL`
 
 Shared password for all seed accounts: **`Start1234`**
 
-| Email                      | Role     | Team     | Notes                                 |
-| -------------------------- | -------- | -------- | ------------------------------------- |
-| `admin@company.com`        | ADMIN    | —        | First admin, no team                  |
-| `mia.frontend@company.com` | MANAGER  | Frontend | Holds 2 items                         |
-| `omar.backend@company.com`  | MANAGER  | Backend  | Holds 2 items                         |
-| `finn.fe@company.com`      | EMPLOYEE | Frontend | Holds 6 items                         |
-| `sara.fe@company.com`      | EMPLOYEE | Frontend | Holds 4 items                         |
-| `leo.fe@company.com`       | EMPLOYEE | Frontend | Holds 3 items                         |
-| `nina.be@company.com`      | EMPLOYEE | Backend  | Holds 3 items                         |
-| `tom.be@company.com`       | EMPLOYEE | Backend  | Holds 2 items                         |
-| `ivy.design@company.com`   | EMPLOYEE | Design   | Holds 2 items                         |
+| Email                      | Role     | Team     | Notes                                   |
+| -------------------------- | -------- | -------- | --------------------------------------- |
+| `admin@company.com`        | ADMIN    | —        | First admin, no team                    |
+| `mia.frontend@company.com` | MANAGER  | Frontend | Holds 2 items                           |
+| `omar.backend@company.com` | MANAGER  | Backend  | Holds 2 items                           |
+| `finn.fe@company.com`      | EMPLOYEE | Frontend | Holds 6 items                           |
+| `sara.fe@company.com`      | EMPLOYEE | Frontend | Holds 4 items                           |
+| `leo.fe@company.com`       | EMPLOYEE | Frontend | Holds 3 items                           |
+| `nina.be@company.com`      | EMPLOYEE | Backend  | Holds 3 items                           |
+| `tom.be@company.com`       | EMPLOYEE | Backend  | Holds 2 items                           |
+| `ivy.design@company.com`   | EMPLOYEE | Design   | Holds 2 items                           |
 | `zoe.design@company.com`   | EMPLOYEE | Design   | Deactivated, holds nothing, has history |
-| `max.noteam@company.com`   | EMPLOYEE | —        | Holds nothing (empty state)           |
+| `max.noteam@company.com`   | EMPLOYEE | —        | Holds nothing (empty state)             |
 
 Seed data: 4 teams (QA has no members), 8 categories, 40 items
 (24 assigned, 11 available, 3 in repair, 2 retired), 11 past assignments.

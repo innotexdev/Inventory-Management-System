@@ -7,8 +7,9 @@ interface HealthStatus {
 
 const router = Router();
 
-router.get("/", (_req: Request, res: Response) => {;
-  res.json({ status: "ok", uptime: process.uptime() } as HealthStatus);
+router.get("/", (_req: Request, res: Response) => {
+  const body: HealthStatus = { status: "ok", uptime: process.uptime() };
+  res.json(body);
 });
 
 export default router;

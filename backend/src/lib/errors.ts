@@ -3,7 +3,12 @@ export class HttpError extends Error {
   readonly code: string;
   readonly fields?: Record<string, string>;
 
-  constructor(statusCode: number, message: string, code = "INTERNAL_ERROR", fields?: Record<string, string>) {
+  constructor(
+    statusCode: number,
+    message: string,
+    code = "INTERNAL_ERROR",
+    fields?: Record<string, string>,
+  ) {
     super(message);
     Object.setPrototypeOf(this, new.target.prototype);
     this.name = new.target.name;

@@ -114,11 +114,7 @@ export class Logger {
     return LEVEL_PRIORITY[level] >= LEVEL_PRIORITY[this.level];
   }
 
-  private write(
-    level: Exclude<LogLevel, "silent">,
-    message: string,
-    meta?: unknown,
-  ): void {
+  private write(level: Exclude<LogLevel, "silent">, message: string, meta?: unknown): void {
     if (!this.shouldLog(level)) return;
 
     const timestamp = new Date().toISOString();
