@@ -1,0 +1,57 @@
+# Inventory — Monorepo (Milestone 1)
+
+Single repository for the Inventory Management mentee project.
+
+```
+repo/
+  backend/    Express + Prisma REST API (port 5000)
+  frontend/   Next.js App Router + TypeScript strict (port 3000)
+```
+
+Each milestone is one pull request against this repo, in order:
+1. Foundations (this commit) — repo setup, lint/format, schema, migrations, seed, README
+2. Authentication — register/login/logout, session cookie, route guards, 403/404
+3. Profile + My inventory
+4. Inventory list/detail, create/edit, repair/retire
+5. Assign/unassign, users list/detail, history
+6. Teams, admin actions, dashboard, hardening
+
+## Prerequisites
+
+- Node.js 20+
+- Docker Desktop (for PostgreSQL)
+
+## Quick start (fresh clone, < 10 min)
+
+```bash
+# backend
+cd backend
+cp .env.example .env   # Windows: copy .env.example .env
+npm install
+docker compose up -d
+npm run db:migrate
+npm run db:seed
+npm run dev            # http://localhost:5000/api/health
+
+# frontend (second terminal)
+cd ../frontend
+npm install
+npm run dev            # http://localhost:3000
+```
+
+## Milestone workflow
+
+- Branch per milestone from `develop`: `feature/m1-foundations`, `feature/m2-auth`, …
+- One PR per milestone, demo + review before the next starts.
+- Do not carry Milestone 2+ code (auth, users logic, mail, swagger) into a
+  Milestone 1 PR. The old `../server` and `../client` folders stay untouched
+  as reference; `repo/` is the clean history going forward.
+
+## Decisions (Milestone 1)
+
+- Backend: Express + Prisma + PostgreSQL (same as prototype in `../server`).
+- Auth approach (M2): session cookie (`httpOnly`, `SameSite=Lax`, 7-day expiry),
+  role/team/active re-read from DB on every request.
+- One active assignment: partial unique index
+  `assignments(itemId) WHERE returnedAt IS NULL` — concurrent assigns → one
+  succeeds, the other gets 409.

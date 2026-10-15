@@ -1,0 +1,113 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  EMPLOYEE
+  MANAGER
+  ADMIN
+}
+
+enum ItemStatus {
+  AVAILABLE
+  ASSIGNED
+  IN_REPAIR
+  RETIRED
+}
+
+model Team {
+  id          String   @id @default(uuid()) @db.Uuid
+  name        String   @unique
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  members     User[]
+
+  @@map("teams")
+}
+
+model User {
+  id           String   @id @default(uuid()) @db.Uuid
+  firstName    String
+  lastName     String
+  email        String   @unique
+  passwordHash String
+  role         Role     @default(EMPLOYEE)
+  teamId       String?  @db.Uuid
+  team         Team?    @relation(fields: [teamId], references: [id], onDelete: SetNull)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  assignments  Assignment[] @relation("Holder")
+  assignedByMe Assignment[] @relation("AssignedBy")
+  returnedByMe Assignment[] @relation("ReturnedBy")
+
+  @@index([teamId])
+  @@index([role])
+  @@index([isActive])
+  @@map("users")
+}
+
+model Category {
+  id          String   @id @default(uuid()) @db.Uuid
+  name        String   @unique
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  items       Item[]
+
+  @@map("categories")
+}
+
+model Item {
+  id       String @id @default(uuid()) @db.Uuid
+  assetTag String @unique @default(dbgenerated("'INV-' || lpad(nextval('item_asset_tag_seq')::text, 4, '0')"))
+  name     String
+
+  categoryId String   @db.Uuid
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+
+  brand        String?
+  model        String?
+  serialNumber String?    @unique
+  status       ItemStatus @default(AVAILABLE)
+  purchaseDate DateTime?  @db.Date
+  notes        String?
+
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  assignments Assignment[]
+
+  @@index([status])
+  @@index([categoryId])
+  @@map("items")
+}
+
+model Assignment {
+  id     String @id @default(uuid()) @db.Uuid
+  itemId String @db.Uuid
+  item   Item   @relation(fields: [itemId], references: [id], onDelete: Restrict)
+
+  userId String @db.Uuid
+  user   User   @relation("Holder", fields: [userId], references: [id], onDelete: Restrict)
+
+  assignedById String   @db.Uuid
+  assignedBy   User     @relation("AssignedBy", fields: [assignedById], references: [id], onDelete: Restrict)
+  assignedAt   DateTime @default(now())
+
+  returnedAt   DateTime?
+  returnedById String?   @db.Uuid
+  returnedBy   User?      @relation("ReturnedBy", fields: [returnedById], references: [id], onDelete: Restrict)
+
+  note String?
+
+  @@index([itemId])
+  @@index([userId])
+  @@map("assignments")
+}
