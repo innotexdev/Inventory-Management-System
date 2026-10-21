@@ -35,6 +35,7 @@ API: `http://localhost:5000` — health: `http://localhost:5000/api/health`
 | Command              | What it does                               |
 | -------------------- | ------------------------------------------ |
 | `npm run dev`        | Start with hot reload (`tsx watch`)        |
+| `npm run clean`      | Remove the `dist` folder                   |
 | `npm run build`      | Generate Prisma client + compile to `dist` |
 | `npm start`          | Run the compiled server                    |
 | `npm run db:migrate` | Apply migrations (`prisma migrate dev`)    |
@@ -43,6 +44,11 @@ API: `http://localhost:5000` — health: `http://localhost:5000/api/health`
 | `npm run typecheck`  | `tsc --noEmit`                             |
 | `npm run lint`       | ESLint (zero warnings)                     |
 | `npm run format`     | Prettier check                             |
+
+`npm run build` compiles with `tsconfig.build.json`, which pins `rootDir` to `src`
+so the entry point is emitted at `dist/index.js` (matching `npm start`).
+`tsconfig.json` additionally type-checks `prisma/seed.ts` and `prisma.config.ts`,
+which live outside `src` and are run directly via `tsx`.
 
 ## Environment
 
