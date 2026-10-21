@@ -88,6 +88,55 @@ export class ServiceUnavailableError extends HttpError {
   }
 }
 
+export type BodyParserErrorType =
+  | "entity.parse.failed"
+  | "entity.too.large"
+  | "entity.verify.failed"
+  | "encoding.unsupported"
+  | "charset.unsupported"
+  | "request.aborted"
+  | "request.size.invalid"
+  | "parameters.too.many";
+
+export interface BodyParserError {
+  type: BodyParserErrorType;
+  message?: string;
+  status?: number;
+  statusCode?: number;
+}
+
+const BODY_PARSER_ERRORS: Record<BodyParserErrorType, () => HttpError> = {
+  "entity.parse.failed": () => new ValidationError("Request body is not valid JSON"),
+  "entity.too.large": () => new PayloadTooLargeError("Request body is too large"),
+  "entity.verify.failed": () => new ForbiddenError("Request body failed verification"),
+  "encoding.unsupported": () =>
+    new HttpError(415, "Unsupported content encoding", "UNSUPPORTED_MEDIA_TYPE"),
+  "charset.unsupported": () => new HttpError(415, "Unsupported charset", "UNSUPPORTED_MEDIA_TYPE"),
+  "request.aborted": () => new ValidationError("Request was aborted before it completed"),
+  "request.size.invalid": () => new ValidationError("Invalid request size"),
+  "parameters.too.many": () => new PayloadTooLargeError("Too many parameters"),
+};
+
+export function isBodyParserError(err: unknown): err is BodyParserError {
+  if (typeof err !== "object" || err === null) {
+    return false;
+  }
+
+  if (!Object.hasOwn(err, "type")) {
+    return false;
+  }
+
+  const type = (err as { type?: unknown }).type;
+
+  return typeof type === "string" && Object.hasOwn(BODY_PARSER_ERRORS, type);
+}
+
+export function toHttpError(err: unknown): HttpError {
+  if (err instanceof HttpError) return err;
+  if (isBodyParserError(err)) return BODY_PARSER_ERRORS[err.type]();
+  return new InternalServerError();
+}
+
 export function isPrismaUniqueConstraintError(err: unknown): boolean {
   return (
     typeof err === "object" &&

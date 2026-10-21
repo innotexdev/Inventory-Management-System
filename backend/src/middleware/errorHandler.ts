@@ -1,19 +1,35 @@
-import { Request, Response, NextFunction } from "express";
-import { HttpError } from "../lib/errors";
+import { ErrorRequestHandler } from "express";
+import { isBodyParserError, toHttpError } from "../lib/errors";
 import { logger } from "../lib/logger";
 
-export function errorHandler(err: Error, _req: Request, res: Response, _next: NextFunction) {
-  void _next;
-  if (err instanceof HttpError) {
-    res.status(err.statusCode).json({
-      error: {
-        code: err.code,
-        message: err.message,
-        ...(err.fields ? { fields: err.fields } : {}),
-      },
-    });
-    return;
+function toLoggableError(err: unknown): Error {
+  if (err instanceof Error) return err;
+  if (typeof err === "string") return new Error(err);
+  try {
+    return new Error(JSON.stringify(err) ?? String(err));
+  } catch {
+    return new Error("Unserializable non-Error thrown");
   }
-  logger.error("Unhandled error", err);
-  res.status(500).json({ error: { code: "INTERNAL_ERROR", message: "Internal server error" } });
 }
+
+export const errorHandler: ErrorRequestHandler = (err: unknown, _req, res, _next) => {
+  const error = toHttpError(err);
+
+  if (error.statusCode >= 500) {
+    logger.error("Unhandled error", toLoggableError(err));
+  } else {
+    logger.warn("Client error", {
+      code: error.code,
+      message: error.message,
+      ...(isBodyParserError(err) ? { type: err.type } : {}),
+    });
+  }
+
+  res.status(error.statusCode).json({
+    error: {
+      code: error.code,
+      message: error.message,
+      ...(error.fields ? { fields: error.fields } : {}),
+    },
+  });
+};
