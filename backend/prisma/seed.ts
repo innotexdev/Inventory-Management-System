@@ -165,7 +165,9 @@ const ITEM_NAMES: Record<string, Array<{ name: string; brand: string; model: str
   ],
 };
 
-// 24 ASSIGNED (3 per category) + 16 others = 40 items.
+// 24 on loan (3 per category, each with an active assignment row) + 16 others
+// = 40 items. ItemStatus has no ASSIGNED member: being on loan is derived from
+// the assignment, not stored on the item.
 const OTHER_STATUSES = [
   "AVAILABLE",
   "AVAILABLE",
@@ -185,7 +187,7 @@ const OTHER_STATUSES = [
   "RETIRED",
 ] as const;
 
-// Holder emails for the 24 assigned items, in order. finn.fe holds 6 (5+).
+// Holder emails for the 24 items on loan, in order. finn.fe holds 6 (5+).
 const HOLDER_ORDER = [
   "finn.fe@company.com",
   "finn.fe@company.com",
@@ -292,7 +294,8 @@ async function main() {
         for (let i = 0; i < specs.length; i++) {
           const spec = specs[i];
           const isAssignedSlot = i < 3;
-          const status = isAssignedSlot ? "ASSIGNED" : OTHER_STATUSES[otherIdx++];
+          // Items on loan are AVAILABLE: "on loan" lives in the assignment row.
+          const status = isAssignedSlot ? "AVAILABLE" : OTHER_STATUSES[otherIdx++];
           const item = await tx.item.create({
             data: {
               name: spec.name,
@@ -311,7 +314,7 @@ async function main() {
           });
           serialIdx++;
 
-          if (status === "ASSIGNED") {
+          if (isAssignedSlot) {
             const holderEmail = HOLDER_ORDER[holderIdx++];
             await tx.assignment.create({
               data: {
