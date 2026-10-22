@@ -10,7 +10,6 @@ export class HttpError extends Error {
     fields?: Record<string, string>,
   ) {
     super(message);
-    Object.setPrototypeOf(this, new.target.prototype);
     this.name = new.target.name;
     this.statusCode = statusCode;
     this.code = code;
@@ -25,66 +24,9 @@ export class ValidationError extends HttpError {
   }
 }
 
-export class AuthenticationError extends HttpError {
-  constructor(message = "Authentication required") {
-    super(401, message, "UNAUTHORIZED");
-  }
-}
-
-export class ForbiddenError extends HttpError {
-  constructor(message = "You do not have permission to perform this action") {
-    super(403, message, "FORBIDDEN");
-  }
-}
-
 export class NotFoundError extends HttpError {
   constructor(message = "Resource not found") {
     super(404, message, "NOT_FOUND");
-  }
-}
-
-export class ConflictError extends HttpError {
-  constructor(message = "Resource already exists") {
-    super(409, message, "CONFLICT");
-  }
-}
-
-export class GoneError extends HttpError {
-  constructor(message = "Resource is no longer available") {
-    super(410, message, "GONE");
-  }
-}
-
-export class PayloadTooLargeError extends HttpError {
-  constructor(message = "Payload too large") {
-    super(413, message, "PAYLOAD_TOO_LARGE");
-  }
-}
-
-export class UnprocessableEntityError extends HttpError {
-  constructor(message = "Unprocessable entity") {
-    super(422, message, "UNPROCESSABLE_ENTITY");
-  }
-}
-
-export class TooManyRequestsError extends HttpError {
-  readonly retryAfterSeconds?: number;
-
-  constructor(message = "Too many requests", retryAfterSeconds?: number) {
-    super(429, message, "TOO_MANY_REQUESTS");
-    this.retryAfterSeconds = retryAfterSeconds;
-  }
-}
-
-export class InternalServerError extends HttpError {
-  constructor(message = "Internal server error") {
-    super(500, message, "INTERNAL_ERROR");
-  }
-}
-
-export class ServiceUnavailableError extends HttpError {
-  constructor(message = "Service temporarily unavailable") {
-    super(503, message, "SERVICE_UNAVAILABLE");
   }
 }
 
@@ -107,14 +49,14 @@ export interface BodyParserError {
 
 const BODY_PARSER_ERRORS: Record<BodyParserErrorType, () => HttpError> = {
   "entity.parse.failed": () => new ValidationError("Request body is not valid JSON"),
-  "entity.too.large": () => new PayloadTooLargeError("Request body is too large"),
-  "entity.verify.failed": () => new ForbiddenError("Request body failed verification"),
+  "entity.too.large": () => new HttpError(413, "Request body is too large", "PAYLOAD_TOO_LARGE"),
+  "entity.verify.failed": () => new HttpError(403, "Request body failed verification", "FORBIDDEN"),
   "encoding.unsupported": () =>
     new HttpError(415, "Unsupported content encoding", "UNSUPPORTED_MEDIA_TYPE"),
   "charset.unsupported": () => new HttpError(415, "Unsupported charset", "UNSUPPORTED_MEDIA_TYPE"),
   "request.aborted": () => new ValidationError("Request was aborted before it completed"),
   "request.size.invalid": () => new ValidationError("Invalid request size"),
-  "parameters.too.many": () => new PayloadTooLargeError("Too many parameters"),
+  "parameters.too.many": () => new HttpError(413, "Too many parameters", "PAYLOAD_TOO_LARGE"),
 };
 
 export function isBodyParserError(err: unknown): err is BodyParserError {
@@ -141,12 +83,6 @@ export function toLoggableError(err: unknown): Error {
   }
 }
 
-export function toHttpError(err: unknown): HttpError {
-  if (err instanceof HttpError) return err;
-  if (isBodyParserError(err)) return BODY_PARSER_ERRORS[err.type]();
-  return new InternalServerError();
-}
-
 export function isPrismaUniqueConstraintError(err: unknown): boolean {
   return (
     typeof err === "object" &&
@@ -163,4 +99,10 @@ export function isPrismaNotFoundError(err: unknown): boolean {
     "code" in err &&
     (err as { code?: unknown }).code === "P2025"
   );
+}
+
+export function toHttpError(err: unknown): HttpError {
+  if (err instanceof HttpError) return err;
+  if (isBodyParserError(err)) return BODY_PARSER_ERRORS[err.type]();
+  return new HttpError(500, "Internal server error");
 }
