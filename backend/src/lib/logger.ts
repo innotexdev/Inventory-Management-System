@@ -10,8 +10,18 @@ const LEVEL_PRIORITY: Record<LogLevel, number> = {
   silent: 90,
 };
 
+const COLORS: Record<Exclude<LogLevel, "silent">, string> = {
+  debug: "\x1b[36m",
+  info: "\x1b[32m",
+  warn: "\x1b[33m",
+  error: "\x1b[31m",
+};
+
+const RESET = "\x1b[0m";
+
 function parseLevel(value: string | undefined, fallback: LogLevel): LogLevel {
-  const normalized = value?.toLowerCase() as LogLevel | undefined;
+  const normalized = value?.toLowerCase();
+
   if (
     normalized === "debug" ||
     normalized === "info" ||
@@ -21,143 +31,101 @@ function parseLevel(value: string | undefined, fallback: LogLevel): LogLevel {
   ) {
     return normalized;
   }
+
   return fallback;
 }
 
 function getDefaultLevel(): LogLevel {
-  if (process.env.LOG_LEVEL) return parseLevel(process.env.LOG_LEVEL, "info");
-  return process.env.NODE_ENV === "production" ? "info" : "debug";
+  return parseLevel(
+    process.env.LOG_LEVEL,
+    process.env.NODE_ENV === "production" ? "info" : "debug",
+  );
 }
 
 function isJsonFormat(): boolean {
   const format = process.env.LOG_FORMAT?.toLowerCase();
-  if (format) return format === "json";
-  return process.env.NODE_ENV === "production";
+
+  return format ? format === "json" : process.env.NODE_ENV === "production";
 }
 
 function useColors(): boolean {
-  if (process.env.NO_COLOR) return false;
-  if (process.env.LOG_FORMAT?.toLowerCase() === "json") return false;
-  return process.stdout.isTTY === true;
+  return (
+    !process.env.NO_COLOR &&
+    process.env.LOG_FORMAT?.toLowerCase() !== "json" &&
+    process.stdout.isTTY === true
+  );
 }
 
-const COLORS: Record<Exclude<LogLevel, "silent">, string> = {
-  debug: "\x1b[36m", // cyan
-  info: "\x1b[32m", // green
-  warn: "\x1b[33m", // yellow
-  error: "\x1b[31m", // red
-};
-const RESET = "\x1b[0m";
-
-function toMeta(value: unknown): LogMeta {
-  if (value instanceof Error) {
+function normalizeMeta(meta?: unknown): LogMeta {
+  if (meta instanceof Error) {
     return {
       err: {
-        name: value.name,
-        message: value.message,
-        stack: value.stack,
+        name: meta.name,
+        message: meta.message,
+        stack: meta.stack,
       },
     };
   }
-  if (typeof value === "object" && value !== null) {
-    return value as LogMeta;
+
+  if (meta !== null && typeof meta === "object") {
+    return meta as LogMeta;
   }
-  if (value !== undefined) {
-    return { data: value };
-  }
-  return {};
+
+  return meta === undefined ? {} : { data: meta };
 }
 
 function formatValue(value: unknown): string {
   if (typeof value === "string") return value;
+
   try {
-    return JSON.stringify(value);
+    const result = JSON.stringify(value);
+    return result ?? String(value);
   } catch {
     return String(value);
   }
 }
 
-export class Logger {
-  private context: LogMeta;
-  private level: LogLevel;
+function writeLog(level: Exclude<LogLevel, "silent">, message: string, meta?: unknown): void {
+  if (LEVEL_PRIORITY[level] < LEVEL_PRIORITY[getDefaultLevel()]) return;
 
-  constructor(context: LogMeta = {}, level?: LogLevel) {
-    this.context = context;
-    this.level = level ?? getDefaultLevel();
+  const entry = {
+    timestamp: new Date().toISOString(),
+    level,
+    msg: message,
+    ...normalizeMeta(meta),
+  };
+
+  const output = level === "warn" || level === "error" ? process.stderr : process.stdout;
+
+  if (isJsonFormat()) {
+    output.write(`${JSON.stringify({ pid: process.pid, ...entry })}\n`);
+    return;
   }
 
-  child(context: LogMeta): Logger {
-    return new Logger({ ...this.context, ...context }, this.level);
-  }
+  const color = useColors() ? COLORS[level] : "";
+  const reset = color ? RESET : "";
 
-  setLevel(level: LogLevel): void {
-    this.level = level;
-  }
+  const { timestamp, msg, ...fields } = entry;
+  const metadata = Object.entries(fields)
+    .filter(([key]) => key !== "level")
+    .map(([key, value]) => `${key}=${formatValue(value)}`)
+    .join(" ");
 
-  debug(message: string, meta?: unknown): void {
-    this.write("debug", message, meta);
-  }
-
-  info(message: string, meta?: unknown): void {
-    this.write("info", message, meta);
-  }
-
-  warn(message: string, meta?: unknown): void {
-    this.write("warn", message, meta);
-  }
-
-  error(message: string, meta?: unknown): void {
-    this.write("error", message, meta);
-  }
-
-  private shouldLog(level: Exclude<LogLevel, "silent">): boolean {
-    return LEVEL_PRIORITY[level] >= LEVEL_PRIORITY[this.level];
-  }
-
-  private write(level: Exclude<LogLevel, "silent">, message: string, meta?: unknown): void {
-    if (!this.shouldLog(level)) return;
-
-    const timestamp = new Date().toISOString();
-    const entry: LogMeta = {
-      timestamp,
-      level,
-      msg: message,
-      ...this.context,
-      ...toMeta(meta),
-    };
-
-    if (isJsonFormat()) {
-      const line = JSON.stringify({ pid: process.pid, ...entry });
-      if (level === "error" || level === "warn") {
-        process.stderr.write(`${line}\n`);
-      } else {
-        process.stdout.write(`${line}\n`);
-      }
-      return;
-    }
-
-    const color = useColors() ? COLORS[level] : "";
-    const reset = useColors() ? RESET : "";
-    const rest = Object.entries(entry)
-      .filter(([key]) => !["timestamp", "level", "msg"].includes(key))
-      .map(([key, value]) => `${key}=${formatValue(value)}`)
-      .join(" ");
-    const line =
-      `[${timestamp}] ${color}${level.toUpperCase().padEnd(5)}${reset} ${message}` +
-      (rest ? ` ${rest}` : "");
-
-    if (level === "error" || level === "warn") {
-      process.stderr.write(`${line}\n`);
-    } else {
-      process.stdout.write(`${line}\n`);
-    }
-  }
+  output.write(
+    `[${timestamp}] ${color}${level.toUpperCase().padEnd(5)}${reset} ${msg}` +
+      (metadata ? ` ${metadata}` : "") +
+      "\n",
+  );
 }
 
-export const logger = new Logger();
+export const logger = {
+  debug: (message: string, meta?: unknown): void => writeLog("debug", message, meta),
 
-export function createLogger(context: LogMeta, level?: LogLevel): Logger {
-  return new Logger(context, level);
-}
+  info: (message: string, meta?: unknown): void => writeLog("info", message, meta),
+
+  warn: (message: string, meta?: unknown): void => writeLog("warn", message, meta),
+
+  error: (message: string, meta?: unknown): void => writeLog("error", message, meta),
+};
 
 export type { LogLevel, LogMeta };
