@@ -1,4 +1,4 @@
-# Inventory — Monorepo (Milestone 1)
+# Inventory — Monorepo
 
 Single repository for the Inventory Management mentee project.
 
@@ -21,7 +21,7 @@ Each milestone is one pull request against this repo, in order:
 - Node.js 20+
 - Docker Desktop (for PostgreSQL)
 
-## Quick start (fresh clone, < 10 min)
+## Quick start 
 
 ```bash
 # backend
@@ -38,20 +38,3 @@ cd ../frontend
 npm install
 npm run dev            # http://localhost:3000
 ```
-
-## Milestone workflow
-
-- Branch per milestone from `develop`: `feature/m1-foundations`, `feature/m2-auth`, …
-- One PR per milestone, demo + review before the next starts.
-- Do not carry Milestone 2+ code (auth, users logic, mail, swagger) into a
-  Milestone 1 PR. The old `../server` and `../client` folders stay untouched
-  as reference; `repo/` is the clean history going forward.
-
-## Decisions (Milestone 1)
-
-- Backend: Express + Prisma + PostgreSQL (same as prototype in `../server`).
-- Auth approach (M2): session cookie (`httpOnly`, `SameSite=Lax`, 7-day expiry),
-  role/team/active re-read from DB on every request.
-- One active assignment: partial unique index
-  `assignments(itemId) WHERE returnedAt IS NULL` — concurrent assigns → one
-  succeeds, the other gets 409.
