@@ -4,6 +4,10 @@
   "description": "Inventory management API — Milestone 1: foundations (schema, migrations, seed)",
   "license": "ISC",
   "type": "commonjs",
+  "engines": {
+    "node": "^20.19 || ^22.12 || >=24.0",
+    "npm": ">=10"
+  },
   "main": "dist/index.js",
   "scripts": {
     "dev": "tsx watch src/index.ts",
@@ -11,11 +15,12 @@
     "build": "npm run clean && prisma generate && tsc -p tsconfig.build.json",
     "start": "node dist/index.js",
     "db:migrate": "prisma migrate dev",
+    "db:deploy": "prisma migrate deploy",
     "db:reset": "prisma migrate reset",
     "db:seed": "tsx prisma/seed.ts",
     "db:generate": "prisma generate",
     "db:studio": "prisma studio",
-    "lint": "eslint .",
+    "lint": "eslint . --max-warnings 0",
     "format": "prettier --check .",
     "format:write": "prettier --write .",
     "typecheck": "tsc --noEmit"
@@ -30,7 +35,7 @@
   },
   "devDependencies": {
     "@types/express": "^5.0.6",
-    "@types/node": "^26.6.4",
+    "@types/node": "^20.19.43",
     "@types/pg": "^8.23.1",
     "eslint": "^9.0.0",
     "prettier": "^3.0.0",

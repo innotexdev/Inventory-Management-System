@@ -6,7 +6,7 @@ migrations, seed script, README.
 
 ## Prerequisites
 
-- Node.js 20+
+- Node.js 20.19+, 22.12+, or 24+ (the range Prisma 7 requires; see `engines` in `package.json`)
 - Docker Desktop (for PostgreSQL), or a local PostgreSQL 15+
 
 ## Setup
@@ -16,7 +16,7 @@ cp .env.example .env   # Windows: copy .env.example .env
 npm install
 
 # start the database
-docker compose up -d
+docker compose up -d --wait
 
 # create the schema (applies prisma/migrations in order)
 npm run db:migrate

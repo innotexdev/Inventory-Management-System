@@ -20,9 +20,7 @@ function positiveInteger(name: string, defaultValue: number): number {
   const value = Number(rawValue);
 
   if (!Number.isSafeInteger(value) || value <= 0) {
-    throw new Error(
-      `Environment variable ${name} must be a positive integer`,
-    );
+    throw new Error(`Environment variable ${name} must be a positive integer`);
   }
 
   return value;
@@ -30,5 +28,5 @@ function positiveInteger(name: string, defaultValue: number): number {
 
 export const env = {
   DATABASE_URL: requiredString("DATABASE_URL"),
-  PORT: positiveInteger("PORT", 3000),
+  PORT: positiveInteger("PORT", 5000),
 } as const;

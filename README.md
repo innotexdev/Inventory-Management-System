@@ -10,7 +10,7 @@ repo/
 
 ## Prerequisites
 
-- Node.js 20+
+- Node.js 20.19+, 22.12+, or 24+ (the range Prisma 7 requires; see `engines` in each `package.json`)
 - Docker Desktop (for PostgreSQL)
 
 ## Quick start 

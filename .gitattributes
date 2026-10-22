@@ -1,0 +1,14 @@
+# Normalize line endings: store LF in the repository, check out LF everywhere.
+# Without this, core.autocrlf=true checks files out with CRLF on Windows, which
+# makes `prettier --check` (endOfLine: "lf") fail on every file.
+* text=auto eol=lf
+
+# Keep binary files untouched.
+*.ico binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.pdf binary
+*.woff binary
+*.woff2 binary
