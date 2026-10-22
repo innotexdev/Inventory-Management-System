@@ -5,6 +5,8 @@ import { errorHandler } from "./middleware/errorHandler";
 
 const app = express();
 
+app.disable("x-powered-by");
+
 app.use(express.json());
 
 app.use("/api/health", healthRouter);
