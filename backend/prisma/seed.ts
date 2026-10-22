@@ -4,8 +4,6 @@ import { logger } from "../src/lib/logger";
 import { requireId } from "../src/utils/required-id";
 import { Role } from "../src/generated/enums";
 
-// Shared password for every seed account (also listed in the README).
-// Satisfies the scope rules: 8-64 chars, lower + upper + digit.
 const SEED_PASSWORD = "Start1234";
 
 const CATEGORIES = [
@@ -278,6 +276,13 @@ async function main() {
       const adminId = requireId(userByEmail, "admin@company.com");
       const miaId = requireId(userByEmail, "mia.frontend@company.com");
       const omarId = requireId(userByEmail, "omar.backend@company.com");
+
+      // Managers only assign to people on their own team; Design/none → admin.
+      const assignerFor = (holderEmail: string) => {
+        const team = USERS.find((u) => u.email === holderEmail)?.team;
+        return team === "Frontend" ? miaId : team === "Backend" ? omarId : adminId;
+      };
+      
       const categoryByName = new Map(
         (await tx.category.findMany()).map((c) => [c.name, c.id] as const),
       );
@@ -320,7 +325,7 @@ async function main() {
               data: {
                 itemId: item.id,
                 userId: requireId(userByEmail, holderEmail),
-                assignedById: holderIdx % 2 === 0 ? miaId : omarId,
+                assignedById: assignerFor(holderEmail),
                 assignedAt: daysAgo(3 + holderIdx),
               },
             });
@@ -345,7 +350,7 @@ async function main() {
           data: {
             itemId: historyItem.id,
             userId: requireId(userByEmail, h.email),
-            assignedById: miaId,
+            assignedById: assignerFor(h.email),
             assignedAt: daysAgo(h.from),
             returnedAt: daysAgo(h.to),
             returnedById: omarId,
