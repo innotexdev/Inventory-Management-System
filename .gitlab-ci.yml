@@ -1,19 +1,11 @@
 # GitLab CI pipeline for the Inventory monorepo.
-#
-# The backend job applies the migrations to a throwaway PostgreSQL and then
-# checks that the migration history still produces exactly prisma/schema.prisma.
-# That way a migration that no longer matches the schema (drift) fails the
-# pipeline instead of reaching a database.
 
 default:
-  image:default:
   image: public.ecr.aws/docker/library/node:24-alpine
   interruptible: true
 
 variables:
-  # Keep npm's cache inside the project directory so it can be cached.
   npm_config_cache: "$CI_PROJECT_DIR/.npm"
-  # Silence npm's update-notifier and funding messages in job logs.
   NPM_CONFIG_UPDATE_NOTIFIER: "false"
   NPM_CONFIG_FUND: "false"
 
@@ -32,12 +24,14 @@ backend:
     DATABASE_URL: "postgresql://postgres:postgres@postgres:5432/inventory?schema=public"
   cache:
     key:
-      files: [backend/package-lock.json]
-    paths: [backend/.npm/]
+      files:
+        - backend/package-lock.json
+    paths:
+      - .npm/
   before_script:
     - cd backend
     - npm ci
-    # Applies the migrations to the throwaway database.
+    - npx prisma generate
     - npm run db:deploy
     - npm run db:seed
   script:
@@ -45,15 +39,16 @@ backend:
     - npm run lint
     - npm run format
     - npm run build
-    # Exit code 2 means the migrations and the schema disagree.
     - npx prisma migrate diff --from-config-datasource --to-schema prisma/schema.prisma --exit-code
 
 frontend:
   stage: verify
   cache:
     key:
-      files: [frontend/package-lock.json]
-    paths: [frontend/.npm/]
+      files:
+        - frontend/package-lock.json
+    paths:
+      - .npm/
   before_script:
     - cd frontend
     - npm ci
