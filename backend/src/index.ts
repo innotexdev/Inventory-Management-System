@@ -1,21 +1,43 @@
-import dotenv from "dotenv";
 import app from "./app";
 import { prisma } from "./lib/prisma";
 import { logger } from "./lib/logger";
+import { env } from "./config/env";
+import { toLoggableError } from "./lib/errors";
 
-dotenv.config();
-
-const PORT = Number(process.env.PORT) || 5000;
+const PORT = env.PORT;
 
 const server = app.listen(PORT, () => {
   logger.info(`Server running on http://localhost:${PORT}`);
 });
 
-async function shutdown(signal: string) {
+let shuttingDown = false;
+
+function closeServer(): Promise<void> {
+  return new Promise((resolve, reject) => {
+    server.close((err) => (err ? reject(err) : resolve()));
+  });
+}
+
+async function shutdown(signal: string): Promise<void> {
+  if (shuttingDown) {
+    logger.debug(`Shutdown already in progress, ignoring ${signal}`);
+    return;
+  }
+  shuttingDown = true;
+
   logger.info(`${signal} received, shutting down...`);
-  server.close();
-  await prisma.$disconnect();
-  process.exit(0);
+
+  let exitCode = 0;
+  try {
+    await closeServer();
+    await prisma.$disconnect();
+    logger.info("Shutdown complete");
+  } catch (err) {
+    logger.error("Shutdown failed", toLoggableError(err));
+    exitCode = 1;
+  }
+
+  process.exitCode = exitCode;
 }
 
 process.on("SIGINT", () => void shutdown("SIGINT"));

@@ -15,7 +15,6 @@ enum Role {
 
 enum ItemStatus {
   AVAILABLE
-  ASSIGNED
   IN_REPAIR
   RETIRED
 }
@@ -67,7 +66,7 @@ model Category {
 
 model Item {
   id       String @id @default(uuid()) @db.Uuid
-  assetTag String @unique @default(dbgenerated("'INV-' || lpad(nextval('item_asset_tag_seq')::text, 4, '0')"))
+  assetTag String @unique @default(dbgenerated("next_asset_tag()"))
   name     String
 
   categoryId String   @db.Uuid

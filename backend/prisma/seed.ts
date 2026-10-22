@@ -1,7 +1,8 @@
-import "dotenv/config";
 import * as argon2 from "argon2";
 import { prisma } from "../src/lib/prisma";
 import { logger } from "../src/lib/logger";
+import { requireId } from "../src/utils/required-id";
+import { Role } from "../src/generated/enums";
 
 // Shared password for every seed account (also listed in the README).
 // Satisfies the scope rules: 8-64 chars, lower + upper + digit.
@@ -29,7 +30,7 @@ type SeedUser = {
   firstName: string;
   lastName: string;
   email: string;
-  role: "ADMIN" | "MANAGER" | "EMPLOYEE";
+  role: Role;
   team?: string;
   isActive?: boolean;
 };
@@ -260,134 +261,149 @@ async function main() {
     userByEmail.set(u.email, user.id);
   }
 
-  // Idempotent: running the seed twice must not create duplicates.
-  if ((await prisma.item.count()) > 0) {
-    logger.info("Seed skipped: items already exist");
-    return;
-  }
+  // Items and their assignments must land together. A seed that fails halfway
+  // would leave partial items behind, and the "items already exist" guard on
+  // the next run would then skip the rest of the seed and keep the broken
+  // data. One transaction means the seed either applies completely or not at all.
+  const seeded = await prisma.$transaction(
+    async (tx) => {
+      // Idempotent: running the seed twice must not create duplicates.
+      if ((await tx.item.count()) > 0) {
+        logger.info("Seed skipped: items already exist");
+        return false;
+      }
 
-  const adminId = userByEmail.get("admin@company.com")!;
-  const miaId = userByEmail.get("mia.frontend@company.com")!;
-  const omarId = userByEmail.get("omar.backend@company.com")!;
-  const categoryByName = new Map(
-    (await prisma.category.findMany()).map((c) => [c.name, c.id] as const),
-  );
+      const adminId = requireId(userByEmail, "admin@company.com");
+      const miaId = requireId(userByEmail, "mia.frontend@company.com");
+      const omarId = requireId(userByEmail, "omar.backend@company.com");
+      const categoryByName = new Map(
+        (await tx.category.findMany()).map((c) => [c.name, c.id] as const),
+      );
 
-  let otherIdx = 0;
-  let holderIdx = 0;
-  let serialIdx = 1;
-  const assignedItems: Array<{ id: string }> = [];
-  const retiredItems: Array<{ id: string }> = [];
-  const repairItems: Array<{ id: string }> = [];
+      let otherIdx = 0;
+      let holderIdx = 0;
+      let serialIdx = 1;
+      const assignedItems: Array<{ id: string }> = [];
+      const retiredItems: Array<{ id: string }> = [];
+      const repairItems: Array<{ id: string }> = [];
 
-  for (const categoryName of CATEGORIES.map((c) => c.name)) {
-    const specs = ITEM_NAMES[categoryName];
-    for (let i = 0; i < specs.length; i++) {
-      const spec = specs[i];
-      const isAssignedSlot = i < 3;
-      const status = isAssignedSlot ? "ASSIGNED" : OTHER_STATUSES[otherIdx++];
-      const item = await prisma.item.create({
-        data: {
-          name: spec.name,
-          categoryId: categoryByName.get(categoryName)!,
-          brand: spec.brand,
-          model: spec.model,
-          // Serials on a subset only, so both paths (with/without) are exercised.
-          serialNumber:
-            serialIdx % 2 === 0
-              ? `SN-${categoryName.slice(0, 2).toUpperCase()}-${serialIdx}`
-              : undefined,
-          status,
-          purchaseDate: status === "RETIRED" ? daysAgo(900) : daysAgo(100 + serialIdx),
-          notes: status === "IN_REPAIR" ? "Screen flickers, sent for repair" : undefined,
-        },
-      });
-      serialIdx++;
+      for (const categoryName of CATEGORIES.map((c) => c.name)) {
+        const specs = ITEM_NAMES[categoryName];
+        for (let i = 0; i < specs.length; i++) {
+          const spec = specs[i];
+          const isAssignedSlot = i < 3;
+          const status = isAssignedSlot ? "ASSIGNED" : OTHER_STATUSES[otherIdx++];
+          const item = await tx.item.create({
+            data: {
+              name: spec.name,
+              categoryId: requireId(categoryByName, categoryName),
+              brand: spec.brand,
+              model: spec.model,
+              // Serials on a subset only, so both paths (with/without) are exercised.
+              serialNumber:
+                serialIdx % 2 === 0
+                  ? `SN-${categoryName.slice(0, 2).toUpperCase()}-${serialIdx}`
+                  : undefined,
+              status,
+              purchaseDate: status === "RETIRED" ? daysAgo(900) : daysAgo(100 + serialIdx),
+              notes: status === "IN_REPAIR" ? "Screen flickers, sent for repair" : undefined,
+            },
+          });
+          serialIdx++;
 
-      if (status === "ASSIGNED") {
-        const holderEmail = HOLDER_ORDER[holderIdx++];
-        await prisma.assignment.create({
+          if (status === "ASSIGNED") {
+            const holderEmail = HOLDER_ORDER[holderIdx++];
+            await tx.assignment.create({
+              data: {
+                itemId: item.id,
+                userId: requireId(userByEmail, holderEmail),
+                assignedById: holderIdx % 2 === 0 ? miaId : omarId,
+                assignedAt: daysAgo(3 + holderIdx),
+              },
+            });
+            assignedItems.push(item);
+          } else if (status === "RETIRED") {
+            retiredItems.push(item);
+          } else if (status === "IN_REPAIR") {
+            repairItems.push(item);
+          }
+        }
+      }
+
+      // History: first assigned item gets 3 past holders + current holder.
+      const historyItem = assignedItems[0];
+      const pastHolders: Array<{ email: string; from: number; to: number }> = [
+        { email: "zoe.design@company.com", from: 90, to: 60 },
+        { email: "nina.be@company.com", from: 59, to: 30 },
+        { email: "omar.backend@company.com", from: 29, to: 5 },
+      ];
+      for (const h of pastHolders) {
+        await tx.assignment.create({
           data: {
-            itemId: item.id,
-            userId: userByEmail.get(holderEmail)!,
-            assignedById: holderIdx % 2 === 0 ? miaId : omarId,
-            assignedAt: daysAgo(3 + holderIdx),
+            itemId: historyItem.id,
+            userId: requireId(userByEmail, h.email),
+            assignedById: miaId,
+            assignedAt: daysAgo(h.from),
+            returnedAt: daysAgo(h.to),
+            returnedById: omarId,
+            note: "Seeded history",
           },
         });
-        assignedItems.push(item);
-      } else if (status === "RETIRED") {
-        retiredItems.push(item);
-      } else if (status === "IN_REPAIR") {
-        repairItems.push(item);
       }
-    }
-  }
 
-  // History: first assigned item gets 3 past holders + current holder.
-  const historyItem = assignedItems[0];
-  const pastHolders: Array<{ email: string; from: number; to: number }> = [
-    { email: "zoe.design@company.com", from: 90, to: 60 },
-    { email: "nina.be@company.com", from: 59, to: 30 },
-    { email: "omar.backend@company.com", from: 29, to: 5 },
-  ];
-  for (const h of pastHolders) {
-    await prisma.assignment.create({
-      data: {
-        itemId: historyItem.id,
-        userId: userByEmail.get(h.email)!,
-        assignedById: miaId,
-        assignedAt: daysAgo(h.from),
-        returnedAt: daysAgo(h.to),
-        returnedById: omarId,
-        note: "Seeded history",
-      },
-    });
-  }
+      // 6 more returned rows on other assigned items.
+      const extraPast = [
+        "omar.backend@company.com",
+        "tom.be@company.com",
+        "ivy.design@company.com",
+        "mia.frontend@company.com",
+        "nina.be@company.com",
+        "zoe.design@company.com",
+      ];
+      for (let i = 0; i < extraPast.length; i++) {
+        await tx.assignment.create({
+          data: {
+            itemId: assignedItems[i + 1].id,
+            userId: requireId(userByEmail, extraPast[i]),
+            assignedById: adminId,
+            assignedAt: daysAgo(50 + i * 5),
+            returnedAt: daysAgo(40 + i * 5),
+            returnedById: miaId,
+          },
+        });
+      }
 
-  // 6 more returned rows on other assigned items.
-  const extraPast = [
-    "omar.backend@company.com",
-    "tom.be@company.com",
-    "ivy.design@company.com",
-    "mia.frontend@company.com",
-    "nina.be@company.com",
-    "zoe.design@company.com",
-  ];
-  for (let i = 0; i < extraPast.length; i++) {
-    await prisma.assignment.create({
-      data: {
-        itemId: assignedItems[i + 1].id,
-        userId: userByEmail.get(extraPast[i])!,
-        assignedById: adminId,
-        assignedAt: daysAgo(50 + i * 5),
-        returnedAt: daysAgo(40 + i * 5),
-        returnedById: miaId,
-      },
-    });
-  }
+      // Retired + in-repair items keep one past assignment each (assigned,
+      // unassigned, then moved — all legal transitions).
+      await tx.assignment.create({
+        data: {
+          itemId: retiredItems[0].id,
+          userId: requireId(userByEmail, "sara.fe@company.com"),
+          assignedById: miaId,
+          assignedAt: daysAgo(300),
+          returnedAt: daysAgo(200),
+          returnedById: miaId,
+        },
+      });
+      await tx.assignment.create({
+        data: {
+          itemId: repairItems[0].id,
+          userId: requireId(userByEmail, "nina.be@company.com"),
+          assignedById: omarId,
+          assignedAt: daysAgo(60),
+          returnedAt: daysAgo(20),
+          returnedById: omarId,
+        },
+      });
 
-  // Retired + in-repair items keep one past assignment each (assigned,
-  // unassigned, then moved — all legal transitions).
-  await prisma.assignment.create({
-    data: {
-      itemId: retiredItems[0].id,
-      userId: userByEmail.get("sara.fe@company.com")!,
-      assignedById: miaId,
-      assignedAt: daysAgo(300),
-      returnedAt: daysAgo(200),
-      returnedById: miaId,
+      return true;
     },
-  });
-  await prisma.assignment.create({
-    data: {
-      itemId: repairItems[0].id,
-      userId: userByEmail.get("nina.be@company.com")!,
-      assignedById: omarId,
-      assignedAt: daysAgo(60),
-      returnedAt: daysAgo(20),
-      returnedById: omarId,
-    },
-  });
+    // The default interactive transaction timeout (5s) is too short for the
+    // ~80 sequential inserts this seed performs.
+    { timeout: 60_000, maxWait: 10_000 },
+  );
+
+  if (!seeded) return;
 
   logger.info("Seed complete", {
     categories: CATEGORIES.length,

@@ -131,6 +131,16 @@ export function isBodyParserError(err: unknown): err is BodyParserError {
   return typeof type === "string" && Object.hasOwn(BODY_PARSER_ERRORS, type);
 }
 
+export function toLoggableError(err: unknown): Error {
+  if (err instanceof Error) return err;
+  if (typeof err === "string") return new Error(err);
+  try {
+    return new Error(JSON.stringify(err) ?? String(err));
+  } catch {
+    return new Error("Unserializable non-Error thrown");
+  }
+}
+
 export function toHttpError(err: unknown): HttpError {
   if (err instanceof HttpError) return err;
   if (isBodyParserError(err)) return BODY_PARSER_ERRORS[err.type]();
