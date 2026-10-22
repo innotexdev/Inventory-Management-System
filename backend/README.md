@@ -53,7 +53,18 @@ which live outside `src` and are run directly via `tsx`.
 ## Environment
 
 See `.env.example`. Variables: `PORT`, `DATABASE_URL`, `LOG_LEVEL`
-(`debug|info|warn|error|silent`), `LOG_FORMAT` (`pretty|json`).
+(`debug|info|warn|error|silent`)
+
+## Database rules
+
+- Database constraints and relationships are defined in the Prisma schema and enforced through migrations.
+- Apply schema changes through Prisma migrations rather than modifying the database manually.
+- Asset tags: Generated asset tags use the INV- prefix and a numeric sequence padded to at least four digits. Tags are never truncated as the sequence grows.
+- User emails: The redundant case-insensitive index users_email_ci_key is removed.
+- Referential integrity and uniqueness must be enforced by database constraints where applicable.
+- Seed data must remain idempotent so `npm run db:seed` can be run multiple times safely.
+
+
 
 ## Seed accounts
 
@@ -72,3 +83,5 @@ Shared password for all seed accounts: **`Start1234`**
 | `ivy.design@company.com`   | EMPLOYEE | Design   | Holds 2 items                           |
 | `zoe.design@company.com`   | EMPLOYEE | Design   | Deactivated, holds nothing, has history |
 | `max.noteam@company.com`   | EMPLOYEE | —        | Holds nothing (empty state)             |
+
+
