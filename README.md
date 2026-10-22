@@ -8,14 +8,6 @@ repo/
   frontend/   Next.js App Router + TypeScript strict (port 3000)
 ```
 
-Each milestone is one pull request against this repo, in order:
-1. Foundations (this commit) — repo setup, lint/format, schema, migrations, seed, README
-2. Authentication — register/login/logout, session cookie, route guards, 403/404
-3. Profile + My inventory
-4. Inventory list/detail, create/edit, repair/retire
-5. Assign/unassign, users list/detail, history
-6. Teams, admin actions, dashboard, hardening
-
 ## Prerequisites
 
 - Node.js 20+
