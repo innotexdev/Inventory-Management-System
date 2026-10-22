@@ -1,4 +1,3 @@
-
 type LogLevel = "debug" | "info" | "warn" | "error" | "silent";
 type LogMeta = Record<string, unknown>;
 
@@ -59,11 +58,7 @@ function formatValue(value: unknown): string {
   }
 }
 
-function writeLog(
-  level: Exclude<LogLevel, "silent">,
-  message: string,
-  meta?: unknown,
-): void {
+function writeLog(level: Exclude<LogLevel, "silent">, message: string, meta?: unknown): void {
   if (LEVEL_PRIORITY[level] < LEVEL_PRIORITY[LOG_LEVEL]) return;
 
   const entry = {
@@ -73,10 +68,7 @@ function writeLog(
     ...normalizeMeta(meta),
   };
 
-  const output =
-    level === "warn" || level === "error"
-      ? process.stderr
-      : process.stdout;
+  const output = level === "warn" || level === "error" ? process.stderr : process.stdout;
 
   const { timestamp, msg, ...fields } = entry;
 
@@ -93,15 +85,11 @@ function writeLog(
 }
 
 export const logger = {
-  debug: (message: string, meta?: unknown): void =>
-    writeLog("debug", message, meta),
+  debug: (message: string, meta?: unknown): void => writeLog("debug", message, meta),
 
-  info: (message: string, meta?: unknown): void =>
-    writeLog("info", message, meta),
+  info: (message: string, meta?: unknown): void => writeLog("info", message, meta),
 
-  warn: (message: string, meta?: unknown): void =>
-    writeLog("warn", message, meta),
+  warn: (message: string, meta?: unknown): void => writeLog("warn", message, meta),
 
-  error: (message: string, meta?: unknown): void =>
-    writeLog("error", message, meta),
+  error: (message: string, meta?: unknown): void => writeLog("error", message, meta),
 };

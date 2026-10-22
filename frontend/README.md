@@ -21,15 +21,15 @@ App: `http://localhost:3000`
 
 ## Scripts
 
-| Command                | What it does                        |
-| ---------------------- | ----------------------------------- |
-| `npm run dev`          | Start with hot reload (Turbopack)   |
-| `npm run build`        | Production build                    |
-| `npm start`            | Serve the production build          |
-| `npm run typecheck`    | `tsc --noEmit`                      |
-| `npm run lint`         | ESLint (zero warnings)              |
-| `npm run format`       | Prettier check                      |
-| `npm run format:write` | Prettier auto-fix                   |
+| Command                | What it does                      |
+| ---------------------- | --------------------------------- |
+| `npm run dev`          | Start with hot reload (Turbopack) |
+| `npm run build`        | Production build                  |
+| `npm start`            | Serve the production build        |
+| `npm run typecheck`    | `tsc --noEmit`                    |
+| `npm run lint`         | ESLint (zero warnings)            |
+| `npm run format`       | Prettier check                    |
+| `npm run format:write` | Prettier auto-fix                 |
 
 ## Environment
 

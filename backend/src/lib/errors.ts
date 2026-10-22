@@ -31,9 +31,7 @@ export class NotFoundError extends HttpError {
 }
 
 export type BodyParserErrorType =
-  | "entity.parse.failed"
-  | "entity.too.large"
-  | "entity.verify.failed"
+  "entity.parse.failed" | "entity.too.large" | "entity.verify.failed";
 
 export interface BodyParserError {
   type: BodyParserErrorType;
@@ -69,25 +67,14 @@ export function toLoggableError(err: unknown): Error {
 }
 
 export function isPrismaUniqueConstraintError(err: unknown): boolean {
-  return (
-    typeof err === "object" &&
-    err !== null &&
-    "code" in err &&
-    err.code === "P2002"
-  );
+  return typeof err === "object" && err !== null && "code" in err && err.code === "P2002";
 }
 
 export function isPrismaNotFoundError(err: unknown): boolean {
-  return (
-    typeof err === "object" &&
-    err !== null &&
-    "code" in err &&
-    err.code === "P2025"
-  );
+  return typeof err === "object" && err !== null && "code" in err && err.code === "P2025";
 }
 
 export function toHttpError(err: unknown): HttpError {
-
   if (err instanceof HttpError) return err;
 
   if (isBodyParserError(err)) return BODY_PARSER_ERRORS[err.type]();

@@ -64,8 +64,6 @@ See `.env.example`. Variables: `PORT`, `DATABASE_URL`, `LOG_LEVEL`
 - Referential integrity and uniqueness must be enforced by database constraints where applicable.
 - Seed data must remain idempotent so `npm run db:seed` can be run multiple times safely.
 
-
-
 ## Seed accounts
 
 Shared password for all seed accounts: **`Start1234`**
@@ -83,5 +81,3 @@ Shared password for all seed accounts: **`Start1234`**
 | `ivy.design@company.com`   | EMPLOYEE | Design   | Holds 2 items                           |
 | `zoe.design@company.com`   | EMPLOYEE | Design   | Deactivated, holds nothing, has history |
 | `max.noteam@company.com`   | EMPLOYEE | —        | Holds nothing (empty state)             |
-
-

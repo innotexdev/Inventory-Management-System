@@ -282,7 +282,7 @@ async function main() {
         const team = USERS.find((u) => u.email === holderEmail)?.team;
         return team === "Frontend" ? miaId : team === "Backend" ? omarId : adminId;
       };
-      
+
       const categoryByName = new Map(
         (await tx.category.findMany()).map((c) => [c.name, c.id] as const),
       );
