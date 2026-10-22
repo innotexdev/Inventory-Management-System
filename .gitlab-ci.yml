@@ -1,5 +1,3 @@
-# GitLab CI pipeline for the Inventory monorepo.
-
 default:
   image: public.ecr.aws/docker/library/node:24-alpine
   interruptible: true

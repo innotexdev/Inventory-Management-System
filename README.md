@@ -20,13 +20,14 @@ repo/
 cd backend
 cp .env.example .env   # Windows: copy .env.example .env
 npm install
-docker compose up -d
+docker compose up -d --wait
 npm run db:migrate
 npm run db:seed
 npm run dev            # http://localhost:5000/api/health
 
 # frontend (second terminal)
 cd ../frontend
+cp .env.local.example .env.local   # Windows: copy .env.example .env
 npm install
 npm run dev            # http://localhost:3000
 ```
