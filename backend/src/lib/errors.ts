@@ -104,5 +104,13 @@ export function isPrismaNotFoundError(err: unknown): boolean {
 export function toHttpError(err: unknown): HttpError {
   if (err instanceof HttpError) return err;
   if (isBodyParserError(err)) return BODY_PARSER_ERRORS[err.type]();
+  // Prisma errors the client caused: a unique constraint that was already
+  // taken, or a record that does not exist. Those are 4xx, not server faults.
+  if (isPrismaUniqueConstraintError(err)) {
+    return new HttpError(409, "Resource already exists", "CONFLICT");
+  }
+  if (isPrismaNotFoundError(err)) {
+    return new NotFoundError();
+  }
   return new HttpError(500, "Internal server error");
 }
