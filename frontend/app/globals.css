@@ -22,7 +22,4 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  /* No font-family here on purpose: Tailwind's preflight already applies
-     var(--font-sans), which @theme maps to Geist. Setting a font-family on
-     body would override the Geist variables the layout installs. */
 }
