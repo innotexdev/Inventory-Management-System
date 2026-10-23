@@ -91,7 +91,6 @@ const USERS: SeedUser[] = [
     role: "EMPLOYEE",
     team: "Design",
   },
-  // Deactivated: holds nothing, but keeps past assignments (history stays readable).
   {
     firstName: "Zoe",
     lastName: "Design",
@@ -100,7 +99,6 @@ const USERS: SeedUser[] = [
     team: "Design",
     isActive: false,
   },
-  // Active with no team and no items: exercises the "No team" group + empty state.
   { firstName: "Max", lastName: "Noteam", email: "max.noteam@company.com", role: "EMPLOYEE" },
 ];
 
@@ -163,9 +161,6 @@ const ITEM_NAMES: Record<string, Array<{ name: string; brand: string; model: str
   ],
 };
 
-// 24 on loan (3 per category, each with an active assignment row) + 16 others
-// = 40 items. ItemStatus has no ASSIGNED member: being on loan is derived from
-// the assignment, not stored on the item.
 const OTHER_STATUSES = [
   "AVAILABLE",
   "AVAILABLE",
@@ -185,7 +180,6 @@ const OTHER_STATUSES = [
   "RETIRED",
 ] as const;
 
-// Holder emails for the 24 items on loan, in order. finn.fe holds 6 (5+).
 const HOLDER_ORDER = [
   "finn.fe@company.com",
   "finn.fe@company.com",
@@ -261,13 +255,8 @@ async function main() {
     userByEmail.set(u.email, user.id);
   }
 
-  // Items and their assignments must land together. A seed that fails halfway
-  // would leave partial items behind, and the "items already exist" guard on
-  // the next run would then skip the rest of the seed and keep the broken
-  // data. One transaction means the seed either applies completely or not at all.
   const seeded = await prisma.$transaction(
     async (tx) => {
-      // Idempotent: running the seed twice must not create duplicates.
       if ((await tx.item.count()) > 0) {
         logger.info("Seed skipped: items already exist");
         return false;
@@ -277,7 +266,6 @@ async function main() {
       const miaId = requireId(userByEmail, "mia.frontend@company.com");
       const omarId = requireId(userByEmail, "omar.backend@company.com");
 
-      // Managers only assign to people on their own team; Design/none → admin.
       const assignerFor = (holderEmail: string) => {
         const team = USERS.find((u) => u.email === holderEmail)?.team;
         return team === "Frontend" ? miaId : team === "Backend" ? omarId : adminId;
@@ -299,7 +287,7 @@ async function main() {
         for (let i = 0; i < specs.length; i++) {
           const spec = specs[i];
           const isAssignedSlot = i < 3;
-          // Items on loan are AVAILABLE: "on loan" lives in the assignment row.
+
           const status = isAssignedSlot ? "AVAILABLE" : OTHER_STATUSES[otherIdx++];
           const item = await tx.item.create({
             data: {
@@ -307,7 +295,7 @@ async function main() {
               categoryId: requireId(categoryByName, categoryName),
               brand: spec.brand,
               model: spec.model,
-              // Serials on a subset only, so both paths (with/without) are exercised.
+
               serialNumber:
                 serialIdx % 2 === 0
                   ? `SN-${categoryName.slice(0, 2).toUpperCase()}-${serialIdx}`
@@ -338,7 +326,6 @@ async function main() {
         }
       }
 
-      // History: first assigned item gets 3 past holders + current holder.
       const historyItem = assignedItems[0];
       const pastHolders: Array<{ email: string; from: number; to: number }> = [
         { email: "zoe.design@company.com", from: 90, to: 60 },
@@ -359,7 +346,6 @@ async function main() {
         });
       }
 
-      // 6 more returned rows on other assigned items.
       const extraPast = [
         "omar.backend@company.com",
         "tom.be@company.com",
@@ -381,8 +367,6 @@ async function main() {
         });
       }
 
-      // Retired + in-repair items keep one past assignment each (assigned,
-      // unassigned, then moved — all legal transitions).
       await tx.assignment.create({
         data: {
           itemId: retiredItems[0].id,
@@ -406,8 +390,7 @@ async function main() {
 
       return true;
     },
-    // The default interactive transaction timeout (5s) is too short for the
-    // ~80 sequential inserts this seed performs.
+
     { timeout: 60_000, maxWait: 10_000 },
   );
 

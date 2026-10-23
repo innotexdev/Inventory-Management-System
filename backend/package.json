@@ -1,7 +1,7 @@
 {
   "name": "inventory-backend",
   "version": "0.1.0",
-  "description": "Inventory management API — Milestone 1: foundations (schema, migrations, seed)",
+  "description": "Inventory management API",
   "license": "ISC",
   "type": "commonjs",
   "engines": {
