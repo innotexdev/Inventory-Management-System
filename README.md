@@ -20,6 +20,7 @@ repo/
 cd backend
 cp .env.example .env   # Windows: copy .env.example .env
 npm install
+npm run db:generate
 docker compose up -d --wait
 npm run db:migrate
 npm run db:seed

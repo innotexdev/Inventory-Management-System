@@ -15,6 +15,9 @@ migrations, seed script, README.
 cp .env.example .env   # Windows: copy .env.example .env
 npm install
 
+# Generate Prisma Client
+npm run db:generate
+
 # start the database
 docker compose up -d --wait
 
@@ -32,18 +35,22 @@ API: `http://localhost:5000` — health: `http://localhost:5000/api/health`
 
 ## Scripts
 
-| Command              | What it does                               |
-| -------------------- | ------------------------------------------ |
-| `npm run dev`        | Start with hot reload (`tsx watch`)        |
-| `npm run clean`      | Remove the `dist` folder                   |
-| `npm run build`      | Generate Prisma client + compile to `dist` |
-| `npm start`          | Run the compiled server                    |
-| `npm run db:migrate` | Apply migrations (`prisma migrate dev`)    |
-| `npm run db:seed`    | Seed data (`tsx prisma/seed.ts`)           |
-| `npm run db:studio`  | Open Prisma Studio                         |
-| `npm run typecheck`  | `tsc --noEmit`                             |
-| `npm run lint`       | ESLint (zero warnings)                     |
-| `npm run format`     | Prettier check                             |
+| Command               | What it does                                              |
+| --------------------- | --------------------------------------------------------- |
+| `npm run dev`         | Start with hot reload (`tsx watch`)                       |
+| `npm run clean`       | Remove the `dist` folder                                  |
+| `npm run build`       | Clean, generate Prisma client, compile to `dist`          |
+| `npm start`           | Run the compiled server                                   |
+| `npm run db:generate` | Generate the Prisma Client                                |
+| `npm run db:migrate`  | Create and apply migrations in dev (`prisma migrate dev`) |
+| `npm run db:deploy`   | Apply existing migrations only (`prisma migrate deploy`)  |
+| `npm run db:reset`    | Drop the database, re-apply all migrations (`prisma migrate reset`) |
+| `npm run db:seed`     | Seed data (`tsx prisma/seed.ts`)                          |
+| `npm run db:studio`   | Open Prisma Studio                                        |
+| `npm run typecheck`   | `tsc --noEmit`                                            |
+| `npm run lint`        | ESLint (zero warnings)                                    |
+| `npm run format`      | Prettier check (no changes written)                       |
+| `npm run format:write`| Prettier write (auto-format all files)                    |
 
 `npm run build` compiles with `tsconfig.build.json`, which pins `rootDir` to `src`
 so the entry point is emitted at `dist/index.js` (matching `npm start`).
