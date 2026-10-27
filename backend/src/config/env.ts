@@ -28,5 +28,7 @@ function positiveInteger(name: string, defaultValue: number): number {
 
 export const env = {
   DATABASE_URL: requiredString("DATABASE_URL"),
+  LOG_LEVEL: requiredString("info"),
+  NODE_ENV: requiredString('development'),
   PORT: positiveInteger("PORT", 5000),
 } as const;

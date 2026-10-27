@@ -30,23 +30,14 @@ export class NotFoundError extends HttpError {
   }
 }
 
-export type BodyParserErrorType =
-  "entity.parse.failed" | "entity.too.large" | "entity.verify.failed";
-
-export interface BodyParserError {
-  type: BodyParserErrorType;
-  message?: string;
-  status?: number;
-  statusCode?: number;
-}
+export type BodyParserErrorType = "entity.parse.failed" | "entity.too.large";
 
 const BODY_PARSER_ERRORS: Record<BodyParserErrorType, () => HttpError> = {
   "entity.parse.failed": () => new ValidationError("Request body is not valid JSON"),
   "entity.too.large": () => new HttpError(413, "Request body is too large", "PAYLOAD_TOO_LARGE"),
-  "entity.verify.failed": () => new HttpError(403, "Request body failed verification", "FORBIDDEN"),
 };
 
-export function isBodyParserError(err: unknown): err is BodyParserError {
+export function isBodyParserError(err: unknown): err is { type: BodyParserErrorType } {
   if (typeof err !== "object" || err === null || !("type" in err)) {
     return false;
   }
@@ -66,12 +57,8 @@ export function toLoggableError(err: unknown): Error {
   }
 }
 
-export function isPrismaUniqueConstraintError(err: unknown): boolean {
-  return typeof err === "object" && err !== null && "code" in err && err.code === "P2002";
-}
-
-export function isPrismaNotFoundError(err: unknown): boolean {
-  return typeof err === "object" && err !== null && "code" in err && err.code === "P2025";
+function hasPrismaCode(err: unknown, code: "P2002" | "P2025"): boolean {
+  return typeof err === "object" && err !== null && "code" in err && err.code === code;
 }
 
 export function toHttpError(err: unknown): HttpError {
@@ -79,11 +66,11 @@ export function toHttpError(err: unknown): HttpError {
 
   if (isBodyParserError(err)) return BODY_PARSER_ERRORS[err.type]();
 
-  if (isPrismaUniqueConstraintError(err)) {
+  if (hasPrismaCode(err, "P2002")) {
     return new HttpError(409, "Resource already exists", "CONFLICT");
   }
 
-  if (isPrismaNotFoundError(err)) {
+  if (hasPrismaCode(err, "P2025")) {
     return new NotFoundError();
   }
 

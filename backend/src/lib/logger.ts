@@ -1,3 +1,5 @@
+import { env } from "../config/env";
+
 type LogLevel = "debug" | "info" | "warn" | "error" | "silent";
 type LogMeta = Record<string, unknown>;
 
@@ -26,8 +28,8 @@ function parseLevel(value: string | undefined, fallback: LogLevel): LogLevel {
 }
 
 const LOG_LEVEL = parseLevel(
-  process.env.LOG_LEVEL,
-  process.env.NODE_ENV === "production" ? "info" : "debug",
+  env.LOG_LEVEL,
+  env.NODE_ENV === "production" ? "info" : "debug",
 );
 
 function normalizeMeta(meta?: unknown): LogMeta {
@@ -61,24 +63,17 @@ function formatValue(value: unknown): string {
 function writeLog(level: Exclude<LogLevel, "silent">, message: string, meta?: unknown): void {
   if (LEVEL_PRIORITY[level] < LEVEL_PRIORITY[LOG_LEVEL]) return;
 
-  const entry = {
-    timestamp: new Date().toISOString(),
-    level,
-    msg: message,
-    ...normalizeMeta(meta),
-  };
+  const timestamp = new Date().toISOString();
+  const metaObj = normalizeMeta(meta);
 
-  const output = level === "warn" || level === "error" ? process.stderr : process.stdout;
-
-  const { timestamp, msg, ...fields } = entry;
-
-  const metadata = Object.entries(fields)
-    .filter(([key]) => key !== "level")
+  const metadata = Object.entries(metaObj)
     .map(([key, value]) => `${key}=${formatValue(value)}`)
     .join(" ");
 
+  const output = level === "warn" || level === "error" ? process.stderr : process.stdout;
+
   output.write(
-    `[${timestamp}] ${level.toUpperCase().padEnd(5)} ${msg}` +
+    `[${timestamp}] ${level.toUpperCase().padEnd(5)} ${message}` +
       (metadata ? ` ${metadata}` : "") +
       "\n",
   );

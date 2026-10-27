@@ -27,7 +27,7 @@ npm run dev            # http://localhost:5000/api/health
 
 # frontend (second terminal)
 cd ../frontend
-cp .env.local.example .env.local   # Windows: copy .env.example .env
+cp .env.local.example .env.local   # Windows: copy .env.local.example .env.local 
 npm install
 npm run dev            # http://localhost:3000
 ```

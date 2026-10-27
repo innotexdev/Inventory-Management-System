@@ -4,10 +4,14 @@ import { logger } from "./lib/logger";
 import { env } from "./config/env";
 import { toLoggableError } from "./lib/errors";
 
-const PORT = env.PORT;
+const server = app.listen(env.PORT, (err) => {
+  if (err) {
+    logger.error("Server failed to start", err);
+    process.exitCode = 1;
+    return;
+  }
 
-const server = app.listen(PORT, () => {
-  logger.info(`Server running on http://localhost:${PORT}`);
+  logger.info(`Server running on http://localhost:${env.PORT}`);
 });
 
 let shuttingDown = false;

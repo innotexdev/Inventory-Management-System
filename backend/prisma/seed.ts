@@ -102,7 +102,9 @@ const USERS: SeedUser[] = [
   { firstName: "Max", lastName: "Noteam", email: "max.noteam@company.com", role: "EMPLOYEE" },
 ];
 
-const ITEM_NAMES: Record<string, Array<{ name: string; brand: string; model: string }>> = {
+type CategoryName = (typeof CATEGORIES)[number]["name"];
+
+const ITEM_NAMES: Record<CategoryName, Array<{ name: string; brand: string; model: string }>> = {
   Laptop: [
     { name: "MacBook Pro 14", brand: "Apple", model: "M4 Pro" },
     { name: "ThinkPad X1 Carbon", brand: "Lenovo", model: "Gen 12" },
@@ -340,7 +342,7 @@ async function main() {
             assignedById: assignerFor(h.email),
             assignedAt: daysAgo(h.from),
             returnedAt: daysAgo(h.to),
-            returnedById: omarId,
+            returnedById: assignerFor(h.email),
             note: "Seeded history",
           },
         });
@@ -362,7 +364,7 @@ async function main() {
             assignedById: adminId,
             assignedAt: daysAgo(50 + i * 5),
             returnedAt: daysAgo(40 + i * 5),
-            returnedById: miaId,
+            returnedById: assignerFor(extraPast[i]),
           },
         });
       }
@@ -388,7 +390,12 @@ async function main() {
         },
       });
 
-      return true;
+      const assignmentsCreated = assignedItems.length + pastHolders.length + extraPast.length + 2;
+
+      return {
+        items: serialIdx - 1,
+        assignments: assignmentsCreated,
+      };
     },
 
     { timeout: 60_000, maxWait: 10_000 },
@@ -400,14 +407,16 @@ async function main() {
     categories: CATEGORIES.length,
     teams: TEAMS.length,
     users: USERS.length,
-    items: 40,
-    pastAssignments: 11,
+    items: seeded.items,
+    pastAssignments: seeded.assignments,
   });
 }
 
 main()
   .catch((e) => {
     logger.error("Seed failed", e);
-    process.exit(1);
+    process.exitCode = 1;
   })
-  .finally(() => void prisma.$disconnect());
+  .finally(async () => {
+    await prisma.$disconnect();
+  });
