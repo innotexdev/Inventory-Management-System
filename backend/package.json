@@ -1,0 +1,53 @@
+{
+  "name": "inventory-backend",
+  "version": "0.1.0",
+  "description": "Inventory management API",
+  "license": "ISC",
+  "type": "commonjs",
+  "engines": {
+    "node": "^20.19 || ^22.12 || >=24.0",
+    "npm": ">=10"
+  },
+  "main": "dist/index.js",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "clean": "node -e \"require('fs').rmSync('dist', { recursive: true, force: true })\"",
+    "build": "npm run clean && prisma generate && tsc -p tsconfig.build.json",
+    "start": "node dist/index.js",
+    "db:migrate": "prisma migrate dev",
+    "db:deploy": "prisma migrate deploy",
+    "db:reset": "prisma migrate reset",
+    "db:seed": "tsx prisma/seed.ts",
+    "db:generate": "prisma generate",
+    "db:studio": "prisma studio",
+    "lint": "eslint . --max-warnings 0",
+    "format": "prettier --check .",
+    "format:write": "prettier --write .",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@prisma/adapter-pg": "^7.10.0",
+    "@prisma/client": "^7.10.0",
+    "argon2": "^0.45.1",
+    "dotenv": "^18.0.6",
+    "express": "^5.2.1",
+    "pg": "^8.23.1"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.6",
+    "@types/node": "^20.19.43",
+    "@types/pg": "^8.23.1",
+    "eslint": "^9.0.0",
+    "prettier": "^3.0.0",
+    "prisma": "^7.10.0",
+    "tsx": "^4.23.15",
+    "typescript": "^5.6.2",
+    "typescript-eslint": "^8.0.0"
+  },
+  "allowScripts": {
+    "argon2@0.45.1": true,
+    "esbuild@0.28.2": true,
+    "prisma": true,
+    "@prisma/engines": true
+  }
+}
