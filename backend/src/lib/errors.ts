@@ -30,6 +30,12 @@ export class NotFoundError extends HttpError {
   }
 }
 
+export class AuthenticationError extends HttpError {
+  constructor(message = "Authentication required") {
+    super(401, message, "UNAUTHORIZED");
+  }
+}
+
 export type BodyParserErrorType = "entity.parse.failed" | "entity.too.large";
 
 const BODY_PARSER_ERRORS: Record<BodyParserErrorType, () => HttpError> = {
@@ -75,4 +81,10 @@ export function toHttpError(err: unknown): HttpError {
   }
 
   return new HttpError(500, "Internal server error");
+}
+
+export function DuplicateEmailError(): HttpError {
+  return new HttpError(409, "Email is already in use", "CONFLICT", {
+    email: "Email is already in use",
+  });
 }

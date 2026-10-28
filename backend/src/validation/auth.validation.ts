@@ -1,0 +1,79 @@
+import { z } from "zod";
+import { ValidationError } from "../lib/errors";
+
+const nameSchema = (field: string) =>
+  z
+    .string({ error: `${field} is required` })
+    .trim()
+    .min(2, `${field} must be at least 2 characters`)
+    .max(50, `${field} must be at most 50 characters`)
+    .regex(
+      /^[A-Za-z\u0100-\u017F'’\- ]+$/,
+      `${field} may only contain letters, spaces, hyphens and apostrophes`,
+    );
+
+export const loginSchema = z.object({
+  email: z
+    .string({ error: "a valid email is required" })
+    .trim()
+    .toLowerCase()
+    .max(254, "a valid email is required")
+    .regex(/^\S+@\S+\.\S+$/, "a valid email is required"),
+  password: z.string({ error: "password is required" }).min(1, "password is required"),
+});
+
+export type LoginInput = z.infer<typeof loginSchema>;
+
+export function parseLoginInput(input: unknown): LoginInput {
+  const result = loginSchema.safeParse(input);
+  if (!result.success) {
+    const fields: Record<string, string> = {};
+    for (const issue of result.error.issues) {
+      const key = String(issue.path[0] ?? "body");
+      fields[key] ??= issue.message;
+    }
+    throw new ValidationError("Some fields are invalid", fields);
+  }
+  return result.data;
+}
+
+export const registerSchema = z
+  .object({
+    firstName: nameSchema("First name"),
+    lastName: nameSchema("Last name"),
+    email: z
+      .string({ error: "Email is required" })
+      .trim()
+      .toLowerCase()
+      .min(1, "Email is required")
+      .max(254, "Email must be at most 254 characters")
+      .regex(/^\S+@\S+\.\S+$/, "Enter a valid email address"),
+    password: z
+      .string({ error: "Password is required" })
+      .min(8, "Password must be at least 8 characters")
+      .max(64, "Password must be at most 64 characters")
+      .regex(
+        /(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
+        "Password must contain a lowercase letter, an uppercase letter and a digit",
+      ),
+    confirmPassword: z.string({ error: "Confirm password is required" }),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    path: ["confirmPassword"],
+    message: "Passwords do not match",
+  });
+
+export type RegisterInput = z.infer<typeof registerSchema>;
+
+export function parseRegisterInput(input: unknown): RegisterInput {
+  const result = registerSchema.safeParse(input);
+  if (!result.success) {
+    const fields: Record<string, string> = {};
+    for (const issue of result.error.issues) {
+      const key = String(issue.path[0] ?? "body");
+      fields[key] ??= issue.message;
+    }
+    throw new ValidationError("Some fields are invalid", fields);
+  }
+  return result.data;
+}
