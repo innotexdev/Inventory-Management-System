@@ -22,13 +22,13 @@ export default function Home() {
         <h1 className="text-4xl font-semibold tracking-tight text-black dark:text-zinc-50">
           Inventory Management
         </h1>
-          <p className="max-w-2xl text-lg leading-8 text-zinc-600 dark:text-zinc-400">
+        <p className="max-w-2xl text-lg leading-8 text-zinc-600 dark:text-zinc-400">
           Track your hardware, who holds it, and when it comes back. The data model is in place; the
           management UI is the next milestone.
         </p>
       </section>
 
-      <ul className="grid gap-6 sm:grid-cols-3 list-none" role="list" >
+      <ul className="grid gap-6 sm:grid-cols-3" role="list">
         {FEATURES.map((feature) => (
           <li
             key={feature.title}

@@ -390,11 +390,9 @@ async function main() {
         },
       });
 
-      const assignmentsCreated = assignedItems.length + pastHolders.length + extraPast.length + 2;
-
       return {
-        items: serialIdx - 1,
-        assignments: assignmentsCreated,
+        items: await tx.item.count(),
+        assignments: await tx.assignment.count(),
       };
     },
 
@@ -408,7 +406,7 @@ async function main() {
     teams: TEAMS.length,
     users: USERS.length,
     items: seeded.items,
-    pastAssignments: seeded.assignments,
+    assignments: seeded.assignments,
   });
 }
 

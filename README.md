@@ -13,6 +13,16 @@ repo/
 - Node.js 20.19+, 22.12+, or 24+ (the range Prisma 7 requires; see `engines` in each `package.json`)
 - Docker Desktop (for PostgreSQL)
 
+### Line Endings
+
+The repository uses LF (`\n`) line endings for text files to maintain
+consistent formatting across operating systems. Prettier is configured
+with `endOfLine: "lf"`, so CRLF (`\r\n`) line endings may cause
+formatting checks to fail.
+
+The `.gitattributes` file enforces LF line endings for text files.
+Binary files, such as images and fonts, are excluded from text conversion.
+
 ## Quick start 
 
 ```bash

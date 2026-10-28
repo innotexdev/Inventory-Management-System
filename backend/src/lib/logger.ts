@@ -1,6 +1,5 @@
-import { env } from "../config/env";
+import { env, type LogLevel } from "../config/env";
 
-type LogLevel = "debug" | "info" | "warn" | "error" | "silent";
 type LogMeta = Record<string, unknown>;
 
 const LEVEL_PRIORITY: Record<LogLevel, number> = {
@@ -10,27 +9,6 @@ const LEVEL_PRIORITY: Record<LogLevel, number> = {
   error: 40,
   silent: 90,
 };
-
-function parseLevel(value: string | undefined, fallback: LogLevel): LogLevel {
-  const normalized = value?.toLowerCase();
-
-  if (
-    normalized === "debug" ||
-    normalized === "info" ||
-    normalized === "warn" ||
-    normalized === "error" ||
-    normalized === "silent"
-  ) {
-    return normalized;
-  }
-
-  return fallback;
-}
-
-const LOG_LEVEL = parseLevel(
-  env.LOG_LEVEL,
-  env.NODE_ENV === "production" ? "info" : "debug",
-);
 
 function normalizeMeta(meta?: unknown): LogMeta {
   if (meta instanceof Error) {
@@ -61,7 +39,7 @@ function formatValue(value: unknown): string {
 }
 
 function writeLog(level: Exclude<LogLevel, "silent">, message: string, meta?: unknown): void {
-  if (LEVEL_PRIORITY[level] < LEVEL_PRIORITY[LOG_LEVEL]) return;
+  if (LEVEL_PRIORITY[level] < LEVEL_PRIORITY[env.LOG_LEVEL]) return;
 
   const timestamp = new Date().toISOString();
   const metaObj = normalizeMeta(meta);
