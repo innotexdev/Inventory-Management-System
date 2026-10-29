@@ -23,8 +23,8 @@ export default function Home() {
           Inventory Management
         </h1>
         <p className="max-w-2xl text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-          Track your hardware, who holds it, and when it comes back. The data model is in place; the
-          management UI is the next milestone.
+          Track your hardware, who holds it, and when it comes back. Registration, login, logout, session management, protected routes,
+          and role-based dashboard redirection are in place, ensuring each user accesses the appropriate dashboard and features based on their role.
         </p>
       </section>
 

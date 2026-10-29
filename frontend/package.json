@@ -9,12 +9,16 @@
     "lint": "eslint . --max-warnings 0",
     "format": "prettier --check .",
     "format:write": "prettier --write .",
+    "test": "node --import tsx/esm --test tests/**/*.test.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@hookform/resolvers": "^6.0.2",
     "next": "16.4.3",
     "react": "19.3.0",
-    "react-dom": "19.3.0"
+    "react-dom": "19.3.0",
+    "react-hook-form": "^7.91.0",
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "@tailwindcss/turbopack": "^4",
@@ -25,6 +29,7 @@
     "eslint-config-next": "16.4.3",
     "prettier": "^3.9.10",
     "tailwindcss": "^4",
+    "tsx": "^4.23.15",
     "typescript": "^5"
   },
   "engines": {

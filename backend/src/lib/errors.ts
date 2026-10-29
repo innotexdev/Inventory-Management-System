@@ -36,6 +36,12 @@ export class AuthenticationError extends HttpError {
   }
 }
 
+export class ForbiddenError extends HttpError {
+  constructor(message = "You do not have permission to perform this action") {
+    super(403, message, "FORBIDDEN");
+  }
+}
+
 export type BodyParserErrorType = "entity.parse.failed" | "entity.too.large";
 
 const BODY_PARSER_ERRORS: Record<BodyParserErrorType, () => HttpError> = {
