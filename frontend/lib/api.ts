@@ -43,10 +43,10 @@ export async function apiRequest(path: string, init?: RequestInit): Promise<Resp
 
 export async function readApiError(res: Response): Promise<ApiErrorDetail> {
   try {
-    const body = (await res.json()) as ApiErrorBody;
+    const body = (await res.json()) as ApiErrorBody & { message?: string; _tag?: string };
     return {
-      message: body.error?.message ?? "Request failed",
-      code: body.error?.code ?? "UNKNOWN",
+      message: body.error?.message ?? body.message ?? "Request failed",
+      code: body.error?.code ?? body._tag ?? "UNKNOWN",
       fields: body.error?.fields,
     };
   } catch {
