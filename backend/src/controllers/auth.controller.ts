@@ -4,9 +4,7 @@ import { AuthenticatedRequest } from "../middleware/require-auth";
 import { clearSessionCookie, setSessionCookie } from "../lib/session";
 
 export async function login(req: Request, res: Response, next: NextFunction): Promise<void> {
-
   try {
-    console.log({ payload: req.body})
     const user = await verifyCredentials(req.body);
     setSessionCookie(res, user.id);
     res.json({ data: user });
