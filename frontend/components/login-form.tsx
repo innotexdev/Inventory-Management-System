@@ -6,7 +6,6 @@ import { loginAction } from "@/lib/actions/auth";
 import { loginSchema, type LoginValues } from "@/lib/validation";
 import { FormField } from "./form-field";
 
-
 type FieldName = "email" | "password";
 
 export function LoginForm({ next }: { next: string }) {
@@ -38,7 +37,14 @@ export function LoginForm({ next }: { next: string }) {
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} noValidate className="flex flex-col gap-4">
-      <FormField id="email" label="Email" type="email" autoComplete="email" error={errors.email?.message} {...register("email")} />
+      <FormField
+        id="email"
+        label="Email"
+        type="email"
+        autoComplete="email"
+        error={errors.email?.message}
+        {...register("email")}
+      />
       <FormField
         id="password"
         label="Password"

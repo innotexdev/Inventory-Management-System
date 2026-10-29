@@ -53,6 +53,7 @@ export const env = {
   DATABASE_URL: requiredString("DATABASE_URL"),
   NODE_ENV,
   JWT_SECRET: requiredString("JWT_SECRET"),
+  CLIENT_URL: requiredString("CLIENT_URL"),
   BASE_URL: requiredString("BASE_URL"),
   LOG_LEVEL: oneOf("LOG_LEVEL", LOG_LEVELS, NODE_ENV === "production" ? "info" : "debug"),
   PORT: positiveInteger("PORT", 5000),

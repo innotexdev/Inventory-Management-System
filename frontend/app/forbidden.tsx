@@ -8,9 +8,7 @@ export default function Forbidden() {
         <h1 className="mt-1 text-2xl font-semibold tracking-tight text-zinc-950 dark:text-zinc-50">
           Not allowed
         </h1>
-        <p className="mt-2 text-zinc-600 dark:text-zinc-400">
-          Your role cannot open this page.
-        </p>
+        <p className="mt-2 text-zinc-600 dark:text-zinc-400">Your role cannot open this page.</p>
         <Link
           href="/"
           className="mt-6 inline-block rounded-full bg-zinc-950 px-5 py-2.5 font-medium text-zinc-50 dark:bg-zinc-50 dark:text-zinc-950"

@@ -101,12 +101,18 @@ describe("parseRegisterInput", () => {
   });
 
   it("rejects password shorter than 8 characters", () => {
-    assertField(() => parseRegisterInput({ ...valid, password: "Ab1", confirmPassword: "Ab1" }), "password");
+    assertField(
+      () => parseRegisterInput({ ...valid, password: "Ab1", confirmPassword: "Ab1" }),
+      "password",
+    );
   });
 
   it("rejects password longer than 64 characters", () => {
     const long = "Aa1" + "x".repeat(62);
-    assertField(() => parseRegisterInput({ ...valid, password: long, confirmPassword: long }), "password");
+    assertField(
+      () => parseRegisterInput({ ...valid, password: long, confirmPassword: long }),
+      "password",
+    );
   });
 
   it("rejects password without uppercase letter", () => {

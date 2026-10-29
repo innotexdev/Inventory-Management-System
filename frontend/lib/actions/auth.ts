@@ -6,7 +6,12 @@ import type { ZodError } from "zod";
 import { apiRequest, readApiError, type CurrentUser } from "@/lib/api";
 import { applyResponseCookies, clearSessionCookie } from "@/lib/cookie";
 import { homePathForRole, isSafeNextPath } from "@/lib/navigation";
-import { loginSchema, registerSchema, type LoginValues, type RegisterValues } from "@/lib/validation";
+import {
+  loginSchema,
+  registerSchema,
+  type LoginValues,
+  type RegisterValues,
+} from "@/lib/validation";
 
 export interface AuthActionState {
   fieldErrors?: Record<string, string>;
@@ -29,7 +34,10 @@ function safeRedirectTarget(nextPath: string | undefined): string | null {
   return nextPath;
 }
 
-export async function loginAction(values: LoginValues, nextPath?: string): Promise<AuthActionState> {
+export async function loginAction(
+  values: LoginValues,
+  nextPath?: string,
+): Promise<AuthActionState> {
   const parsed = loginSchema.safeParse(values);
   if (!parsed.success) {
     return {

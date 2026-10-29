@@ -24,20 +24,29 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html
-      lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
-    >
+    <html lang="en" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col">
         <Suspense
           fallback={
             <header className="border-b border-zinc-200 dark:border-zinc-800">
-              <nav aria-label="Main" className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
-               
-                <Link href="/" className="flex items-center gap-2 w-full font-semibold text-zinc-950 dark:text-zinc-50">
-                <Image src="/logo-2.png" width={80} height={80} alt="site logo" loading="eager"   className="h-8 w-auto"/> 
-                <span>Inventory</span>
-              </Link>
+              <nav
+                aria-label="Main"
+                className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3"
+              >
+                <Link
+                  href="/"
+                  className="flex items-center gap-2 w-full font-semibold text-zinc-950 dark:text-zinc-50"
+                >
+                  <Image
+                    src="/logo-2.png"
+                    width={80}
+                    height={80}
+                    alt="site logo"
+                    loading="eager"
+                    className="h-8 w-auto"
+                  />
+                  <span>Inventory</span>
+                </Link>
               </nav>
             </header>
           }

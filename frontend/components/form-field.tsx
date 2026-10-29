@@ -10,9 +10,7 @@ interface FormFieldProps extends InputHTMLAttributes<HTMLInputElement> {
 
 const inputClassName = (invalid: boolean) =>
   `w-full rounded-md border bg-white px-3 py-2 text-zinc-950 outline-none transition-colors focus:border-zinc-950 dark:bg-zinc-950 dark:text-zinc-50 dark:focus:border-zinc-50 ${
-    invalid
-      ? "border-red-600 dark:border-red-500"
-      : "border-zinc-300 dark:border-zinc-700"
+    invalid ? "border-red-600 dark:border-red-500" : "border-zinc-300 dark:border-zinc-700"
   }`;
 
 export function FormField({ id, label, error, ...props }: FormFieldProps) {

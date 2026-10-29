@@ -30,7 +30,11 @@ export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
 export async function requireUser(nextPath?: string): Promise<CurrentUser> {
   const user = await getCurrentUser();
   if (!user) {
-    redirect(nextPath && isSafeNextPath(nextPath) ? `/login?next=${encodeURIComponent(nextPath)}` : "/login");
+    redirect(
+      nextPath && isSafeNextPath(nextPath)
+        ? `/login?next=${encodeURIComponent(nextPath)}`
+        : "/login",
+    );
   }
   return user;
 }

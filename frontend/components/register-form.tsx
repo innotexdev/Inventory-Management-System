@@ -37,9 +37,28 @@ export function RegisterForm() {
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} noValidate className="flex flex-col gap-4">
-      <FormField id="firstName" label="First name" autoComplete="given-name" error={errors.firstName?.message} {...register("firstName")} />
-      <FormField id="lastName" label="Last name" autoComplete="family-name" error={errors.lastName?.message} {...register("lastName")} />
-      <FormField id="email" label="Email" type="email" autoComplete="email" error={errors.email?.message} {...register("email")} />
+      <FormField
+        id="firstName"
+        label="First name"
+        autoComplete="given-name"
+        error={errors.firstName?.message}
+        {...register("firstName")}
+      />
+      <FormField
+        id="lastName"
+        label="Last name"
+        autoComplete="family-name"
+        error={errors.lastName?.message}
+        {...register("lastName")}
+      />
+      <FormField
+        id="email"
+        label="Email"
+        type="email"
+        autoComplete="email"
+        error={errors.email?.message}
+        {...register("email")}
+      />
       <FormField
         id="password"
         label="Password"

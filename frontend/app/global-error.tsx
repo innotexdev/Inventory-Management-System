@@ -19,7 +19,9 @@ export default function GlobalError({
             Something went wrong while loading the application.
           </p>
           {error.digest ? (
-            <p className="mt-1 text-xs text-zinc-400 dark:text-zinc-500">Reference: {error.digest}</p>
+            <p className="mt-1 text-xs text-zinc-400 dark:text-zinc-500">
+              Reference: {error.digest}
+            </p>
           ) : null}
           <button
             type="button"

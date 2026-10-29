@@ -6,7 +6,10 @@ const nameField = (field: string) =>
     .trim()
     .min(2, `${field} must be at least 2 characters`)
     .max(50, `${field} must be at most 50 characters`)
-    .regex(/^[A-Za-z\u0100-\u017F'’\- ]+$/, `${field} may only contain letters, spaces, hyphens and apostrophes`);
+    .regex(
+      /^[A-Za-z\u0100-\u017F'’\- ]+$/,
+      `${field} may only contain letters, spaces, hyphens and apostrophes`,
+    );
 
 const emailField = z
   .string({ error: "Email is required" })
