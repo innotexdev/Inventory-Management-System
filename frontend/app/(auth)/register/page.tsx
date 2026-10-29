@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { getCurrentUser, homePathForRole } from "@/lib/auth";
 import { RegisterForm } from "@/components/register-form";
 
-export const dynamic = "force-dynamic";
+export const instant = false;
 
 export const metadata: Metadata = {
   title: "Register",

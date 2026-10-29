@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { getCurrentUser, homePathForRole, isSafeNextPath } from "@/lib/auth";
 import { LoginForm } from "@/components/login-form";
 
-export const dynamic = "force-dynamic";
+export const instant = false;
 
 export const metadata: Metadata = {
   title: "Log in",
