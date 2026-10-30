@@ -1,21 +1,11 @@
 import { NextFunction, Request, Response } from "express";
+import type { Prisma } from "../generated/client";
 import { prisma } from "../lib/prisma";
 import { AuthenticationError } from "../lib/errors";
 import { authUserSelect } from "../services/auth.service";
-import { SESSION_COOKIE, destroySession, getSessionCookie, getSessionUserId } from "../lib/session";
-import { Role } from "../generated/enums";
+import { clearSessionCookie, getSessionCookie, getSessionUserId } from "../lib/session";
 
-export interface AuthenticatedUser {
-  id: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-  role: Role;
-  teamId: string | null;
-  isActive: boolean;
-  createdAt: Date;
-  team: { id: string; name: string } | null;
-}
+export type AuthenticatedUser = Prisma.UserGetPayload<{ select: typeof authUserSelect }>;
 
 export interface AuthenticatedRequest extends Request {
   user: AuthenticatedUser;
@@ -35,8 +25,7 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
     });
 
     if (!user || !user.isActive) {
-      destroySession(sessionId);
-      res.clearCookie(SESSION_COOKIE, { path: "/" });
+      clearSessionCookie(res);
       throw new AuthenticationError("Not authenticated");
     }
 

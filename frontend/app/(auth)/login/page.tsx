@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { getCurrentUser, homePathForRole, isSafeNextPath } from "@/lib/auth";
+import { getCurrentUser } from "@/lib/auth";
 import { LoginForm } from "@/components/login-form";
+import { homePathForRole } from "@/lib/navigation";
+import { isSafeNextPath } from "@/lib/safe-path";
 
 export const instant = false;
 

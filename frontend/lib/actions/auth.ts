@@ -4,14 +4,16 @@ import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import type { ZodError } from "zod";
 import { apiRequest, readApiError, type CurrentUser } from "@/lib/api";
-import { applyResponseCookies, clearSessionCookie } from "@/lib/cookie";
-import { homePathForRole, isSafeNextPath } from "@/lib/navigation";
+import { forwardSessionCookie } from "@/lib/cookie";
+import { homePathForRole } from "@/lib/navigation";
 import {
   loginSchema,
   registerSchema,
   type LoginValues,
   type RegisterValues,
 } from "@/lib/validation";
+import { SESSION_COOKIE } from "@/constant";
+import { isSafeNextPath } from "../safe-path";
 
 export interface AuthActionState {
   fieldErrors?: Record<string, string>;
@@ -34,6 +36,25 @@ function safeRedirectTarget(nextPath: string | undefined): string | null {
   return nextPath;
 }
 
+async function postAuth(
+  path: string,
+  body: LoginValues | RegisterValues,
+): Promise<{ user: CurrentUser } | { error: AuthActionState }> {
+  let res: Response;
+  try {
+    res = await apiRequest(path, { method: "POST", body: JSON.stringify(body) });
+  } catch {
+    return { error: { formError: "Could not reach the server. Try again." } };
+  }
+  if (!res.ok) {
+    const { message, fields } = await readApiError(res);
+    return { error: { fieldErrors: fields, formError: message } };
+  }
+  await forwardSessionCookie(res);
+  const { data } = (await res.json()) as { data: CurrentUser };
+  return { user: data };
+}
+
 export async function loginAction(
   values: LoginValues,
   nextPath?: string,
@@ -46,24 +67,10 @@ export async function loginAction(
     };
   }
 
-  let res: Response;
-  try {
-    res = await apiRequest("/api/auth/login", {
-      method: "POST",
-      body: JSON.stringify(parsed.data),
-    });
-  } catch {
-    return { formError: "Could not reach the server. Try again." };
-  }
+  const result = await postAuth("/api/auth/login", parsed.data);
+  if ("error" in result) return result.error;
 
-  if (!res.ok) {
-    const error = await readApiError(res);
-    return { fieldErrors: error.fields, formError: error.message };
-  }
-
-  await applyResponseCookies(res);
-  const { data } = (await res.json()) as { data: CurrentUser };
-  redirect(safeRedirectTarget(nextPath) ?? homePathForRole(data.role));
+  redirect(safeRedirectTarget(nextPath) ?? homePathForRole(result.user.role));
 }
 
 export async function registerAction(values: RegisterValues): Promise<AuthActionState> {
@@ -75,36 +82,13 @@ export async function registerAction(values: RegisterValues): Promise<AuthAction
     };
   }
 
-  let res: Response;
-  try {
-    res = await apiRequest("/api/auth/register", {
-      method: "POST",
-      body: JSON.stringify(parsed.data),
-    });
-  } catch {
-    return { formError: "Could not reach the server. Try again." };
-  }
+  const result = await postAuth("/api/auth/register", parsed.data);
+  if ("error" in result) return result.error;
 
-  if (!res.ok) {
-    const error = await readApiError(res);
-    return { fieldErrors: error.fields, formError: error.message };
-  }
-
-  await applyResponseCookies(res);
   redirect("/my-inventory");
 }
 
 export async function logoutAction(): Promise<void> {
-  const cookieHeader = (await cookies()).toString();
-  try {
-    const res = await apiRequest("/api/auth/logout", {
-      method: "POST",
-      headers: { cookie: cookieHeader },
-    });
-    await applyResponseCookies(res);
-  } catch {
-    void 0;
-  }
-  await clearSessionCookie("sid");
+  (await cookies()).delete(SESSION_COOKIE);
   redirect("/login");
 }

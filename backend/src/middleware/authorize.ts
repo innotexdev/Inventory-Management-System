@@ -9,20 +9,15 @@ const RANK: Record<Role, number> = {
   ADMIN: 2,
 };
 
-export const authorize = (...allowedRoles: Role[]) => {
-  const requiredRank = Math.min(...allowedRoles.map((r) => RANK[r]));
+export const hasMinRole = (role: Role, minRole: Role): boolean => RANK[role] >= RANK[minRole];
 
-  return (req: Request, _res: Response, next: NextFunction) => {
-    const user = (req as Partial<AuthenticatedRequest>).user;
-
-    if (!user) {
-      return next(new AuthenticationError());
-    }
-
-    if (RANK[user.role] < requiredRank) {
-      return next(new ForbiddenError());
-    }
-
-    next();
-  };
+export const authorize = (minRole: Role) => (req: Request, _res: Response, next: NextFunction) => {
+  const user = (req as Partial<AuthenticatedRequest>).user;
+  if (!user) {
+    return next(new AuthenticationError());
+  }
+  if (!hasMinRole(user.role, minRole)) {
+    return next(new ForbiddenError());
+  }
+  next();
 };

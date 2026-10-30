@@ -1,7 +1,8 @@
 import * as argon2 from "argon2";
 import { prisma } from "../lib/prisma";
-import { AuthenticationError, DuplicateEmailError, toHttpError } from "../lib/errors";
-import { parseLoginInput, parseRegisterInput } from "../validation/auth.validation";
+import type { Prisma } from "../generated/client";
+import { AuthenticationError, DuplicateEmailError, isUniqueViolation } from "../lib/errors";
+import { LoginInput, RegisterInput } from "../validation/auth.validation";
 
 export const authUserSelect = {
   id: true,
@@ -13,11 +14,9 @@ export const authUserSelect = {
   isActive: true,
   createdAt: true,
   team: { select: { id: true, name: true } },
-} as const;
+} satisfies Prisma.UserSelect;
 
-export async function verifyCredentials(input: unknown) {
-  const { email, password } = parseLoginInput(input);
-
+export async function verifyCredentials({ email, password }: LoginInput) {
   const user = await prisma.user.findUnique({
     where: { email },
     select: { ...authUserSelect, passwordHash: true },
@@ -27,27 +26,17 @@ export async function verifyCredentials(input: unknown) {
     throw new AuthenticationError("Invalid email or password");
   }
 
-  const ok = await argon2.verify(user.passwordHash, password);
-  if (!ok) {
+  const { passwordHash, ...publicUser } = user;
+
+  const isValid = await argon2.verify(passwordHash, password);
+  if (!isValid) {
     throw new AuthenticationError("Invalid email or password");
   }
 
-  const { passwordHash, ...publicUser } = user;
-  void passwordHash;
   return publicUser;
 }
 
-export async function register(input: unknown) {
-  const data = parseRegisterInput(input);
-
-  const existing = await prisma.user.findFirst({
-    where: { email: { equals: data.email, mode: "insensitive" } },
-    select: { id: true },
-  });
-  if (existing) {
-    throw DuplicateEmailError();
-  }
-
+export async function register(data: RegisterInput) {
   const passwordHash = await argon2.hash(data.password);
 
   try {
@@ -61,9 +50,10 @@ export async function register(input: unknown) {
       select: authUserSelect,
     });
   } catch (err: unknown) {
-    if (toHttpError(err)) {
-      throw DuplicateEmailError();
+    if (isUniqueViolation(err)) {
+      throw new DuplicateEmailError();
     }
+
     throw err;
   }
 }

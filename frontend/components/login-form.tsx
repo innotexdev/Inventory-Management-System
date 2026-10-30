@@ -1,12 +1,12 @@
 "use client";
 
-import { useForm } from "react-hook-form";
+import { Path, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { loginAction } from "@/lib/actions/auth";
 import { loginSchema, type LoginValues } from "@/lib/validation";
 import { FormField } from "./form-field";
-
-type FieldName = "email" | "password";
+import { applyServerErrors } from "@/lib/apply-server-errors";
+const LOGIN_FIELDS = ["email", "password"] as const satisfies readonly Path<LoginValues>[];
 
 export function LoginForm({ next }: { next: string }) {
   const {
@@ -17,22 +17,7 @@ export function LoginForm({ next }: { next: string }) {
   } = useForm<LoginValues>({ resolver: zodResolver(loginSchema), mode: "onTouched" });
 
   async function onSubmit(values: LoginValues) {
-    const result = await loginAction(values, next);
-    if (!result) {
-      return;
-    }
-
-    const names: FieldName[] = ["email", "password"];
-    let mapped = false;
-    for (const [field, message] of Object.entries(result.fieldErrors ?? {})) {
-      if (names.includes(field as FieldName)) {
-        setError(field as FieldName, { message });
-        mapped = true;
-      }
-    }
-    if (!mapped && result.formError) {
-      setError("root.server", { message: result.formError });
-    }
+    applyServerErrors(setError, LOGIN_FIELDS, await loginAction(values, next));
   }
 
   return (

@@ -16,6 +16,8 @@ Express + Prisma (PostgreSQL) REST API.
 
 ```bash
 cp .env.example .env   # Windows: copy .env.example .env
+
+
 npm install
 
 # Generate Prisma Client
@@ -29,7 +31,27 @@ npm run db:migrate
 
 # fill with seed data (idempotent: safe to run twice)
 npm run db:seed
+```
 
+### Generate JWT Secret
+
+Before starting the API, replace the `JWT_SECRET` placeholder in `backend/.env` with a securely generated secret.
+
+Using OpenSSL:
+
+```bash
+openssl rand -hex 32
+```
+
+If OpenSSL is unavailable (for example, on Windows), use Node.js:
+
+```bash
+node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+```
+
+Copy the generated value into `JWT_SECRET` in `backend/.env`.
+
+```bash
 # run the API
 npm run dev
 ```
@@ -46,13 +68,14 @@ Auth endpoints live under `/api/auth`:
 | ------ | -------------------- | ------ | ---------------------------------------------- |
 | POST   | `/api/auth/register` | Public | Create account (Zod-validated, Argon2 hashing) |
 | POST   | `/api/auth/login`    | Public | Verify credentials, set session cookie         |
-| POST   | `/api/auth/logout`   | User   | Invalidate session                             |
+| POST   | `/api/auth/logout`   | User   | clear the session cookie                       |
 | GET    | `/api/auth/me`       | User   | Return current user and role                   |
 
-- Sessions use a JWT stored in an httpOnly cookie; CORS allows the configured
-  frontend origin via `CLIENT_URL`.
-- Protected routes use the `requireAuth` middleware plus `authorize(Role)` for
-  role checks (e.g. `EMPLOYEE`, `MANAGER`, `ADMIN`).
+- Sessions use a stateless JWT stored in an httpOnly cookie, with a seven-day
+  expiration.
+- CORS allows the configured frontend origin via `CLIENT_URL`.
+- Protected routes use the `requireAuth` middleware to verify the user's
+  authentication.
 
 ## Scripts
 

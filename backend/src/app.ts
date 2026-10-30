@@ -25,10 +25,13 @@ app.use(cookieParser());
 
 app.use("/api/health", healthRouter);
 app.use("/api/auth", authRouter);
-app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
-app.get("/api-docs.json", (_req, res) => {
-  res.json(swaggerSpec);
-});
+
+if (env.NODE_ENV !== "production") {
+  app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+  app.get("/api-docs.json", (_req, res) => {
+    res.json(swaggerSpec);
+  });
+}
 
 app.use(notFound);
 app.use(errorHandler);

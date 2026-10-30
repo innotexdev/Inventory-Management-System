@@ -1,6 +1,26 @@
 import { z } from "zod";
 import { ValidationError } from "../lib/errors";
 
+export function parseWith<T extends z.ZodType>(schema: T, input: unknown): z.infer<T> {
+  const result = schema.safeParse(input);
+  if (result.success) {
+    return result.data;
+  }
+  const fields: Record<string, string> = {};
+  for (const issue of result.error.issues) {
+    fields[String(issue.path[0] ?? "body")] ??= issue.message;
+  }
+  throw new ValidationError("Some fields are invalid", fields);
+}
+
+const emailSchema = z
+  .string({ error: "Email is required" })
+  .trim()
+  .toLowerCase()
+  .min(1, "Email is required")
+  .max(254, "Email must be at most 254 characters")
+  .regex(/^\S+@\S+\.\S+$/, "Enter a valid email address");
+
 const nameSchema = (field: string) =>
   z
     .string({ error: `${field} is required` })
@@ -13,41 +33,17 @@ const nameSchema = (field: string) =>
     );
 
 export const loginSchema = z.object({
-  email: z
-    .string({ error: "a valid email is required" })
-    .trim()
-    .toLowerCase()
-    .max(254, "a valid email is required")
-    .regex(/^\S+@\S+\.\S+$/, "a valid email is required"),
-  password: z.string({ error: "password is required" }).min(1, "password is required"),
+  email: emailSchema,
+  password: z.string({ error: "Password is required" }).min(1, "Password is required"),
 });
 
 export type LoginInput = z.infer<typeof loginSchema>;
-
-export function parseLoginInput(input: unknown): LoginInput {
-  const result = loginSchema.safeParse(input);
-  if (!result.success) {
-    const fields: Record<string, string> = {};
-    for (const issue of result.error.issues) {
-      const key = String(issue.path[0] ?? "body");
-      fields[key] ??= issue.message;
-    }
-    throw new ValidationError("Some fields are invalid", fields);
-  }
-  return result.data;
-}
 
 export const registerSchema = z
   .object({
     firstName: nameSchema("First name"),
     lastName: nameSchema("Last name"),
-    email: z
-      .string({ error: "Email is required" })
-      .trim()
-      .toLowerCase()
-      .min(1, "Email is required")
-      .max(254, "Email must be at most 254 characters")
-      .regex(/^\S+@\S+\.\S+$/, "Enter a valid email address"),
+    email: emailSchema,
     password: z
       .string({ error: "Password is required" })
       .min(8, "Password must be at least 8 characters")
@@ -64,16 +60,3 @@ export const registerSchema = z
   });
 
 export type RegisterInput = z.infer<typeof registerSchema>;
-
-export function parseRegisterInput(input: unknown): RegisterInput {
-  const result = registerSchema.safeParse(input);
-  if (!result.success) {
-    const fields: Record<string, string> = {};
-    for (const issue of result.error.issues) {
-      const key = String(issue.path[0] ?? "body");
-      fields[key] ??= issue.message;
-    }
-    throw new ValidationError("Some fields are invalid", fields);
-  }
-  return result.data;
-}

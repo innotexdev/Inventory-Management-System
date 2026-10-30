@@ -1,4 +1,5 @@
 import type { Role } from "./api";
+import { hasMinRole } from "./auth";
 
 export interface NavLink {
   href: string;
@@ -6,14 +7,10 @@ export interface NavLink {
 }
 
 export function homePathForRole(role?: Role | null): string {
-  if (role === "MANAGER" || role === "ADMIN") {
+  if (hasMinRole(role, "MANAGER")) {
     return "/dashboard";
   }
   return "/my-inventory";
-}
-
-export function isSafeNextPath(value: unknown): value is string {
-  return typeof value === "string" && value.startsWith("/") && !value.startsWith("//");
 }
 
 export function linksForRole(role: Role | null): NavLink[] {
@@ -23,7 +20,7 @@ export function linksForRole(role: Role | null): NavLink[] {
       { href: "/register", label: "Register" },
     ];
   }
-  if (role === "MANAGER" || role === "ADMIN") {
+  if (hasMinRole(role, "MANAGER")) {
     return [
       { href: "/my-inventory", label: "My inventory" },
       { href: "/dashboard", label: "Dashboard" },

@@ -1,102 +1,65 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import type { Request, Response } from "express";
-import type { NextFunction } from "express";
-import { authorize } from "../../src/middleware/authorize";
-import { AuthenticationError, ForbiddenError } from "../../src/lib/errors";
-import { Role } from "../../src/generated/enums";
-import type { AuthenticatedUser } from "../../src/middleware/require-auth";
+import { authorize, hasMinRole } from "../middleware/authorize";
+import { AuthenticationError, ForbiddenError } from "../lib/errors";
+import { Role } from "../generated/enums";
+import type { AuthenticatedRequest, AuthenticatedUser } from "../middleware/require-auth";
 
-function makeReq(role?: Role): Request {
-  const user: AuthenticatedUser | undefined = role
-    ? {
-        id: "00000000-0000-0000-0000-000000000001",
-        firstName: "Test",
-        lastName: "User",
-        email: "test@example.com",
-        role,
-        teamId: null,
-        isActive: true,
-        createdAt: new Date(),
-        team: null,
-      }
-    : undefined;
-  return { user } as unknown as Request;
+function makeUser(role: Role): AuthenticatedUser {
+  return {
+    id: "00000000-0000-0000-0000-000000000001",
+    firstName: "Test",
+    lastName: "User",
+    email: "test@example.com",
+    role,
+    teamId: null,
+    isActive: true,
+    createdAt: new Date(),
+    team: null,
+  };
 }
 
-function run(
-  middleware: (req: Request, res: Response, next: NextFunction) => void,
-  req: Request,
-): Error | undefined {
-  let caught: Error | undefined;
-  middleware(req, {} as Response, (err?: unknown) => {
-    if (err instanceof Error) caught = err;
+function run(req: Partial<AuthenticatedRequest>, minimumRole: Role): unknown {
+  let result: unknown;
+  authorize(minimumRole)(req as Request, {} as Response, (err?: unknown) => {
+    result = err;
   });
-  return caught;
+  return result;
 }
+
+describe("hasMinRole", () => {
+  const cases: Array<[Role, Role, boolean]> = [
+    // [user role, minimum role, expected]
+    [Role.EMPLOYEE, Role.EMPLOYEE, true],
+    [Role.EMPLOYEE, Role.MANAGER, false],
+    [Role.EMPLOYEE, Role.ADMIN, false],
+    [Role.MANAGER, Role.EMPLOYEE, true],
+    [Role.MANAGER, Role.MANAGER, true],
+    [Role.MANAGER, Role.ADMIN, false],
+    [Role.ADMIN, Role.EMPLOYEE, true],
+    [Role.ADMIN, Role.MANAGER, true],
+    [Role.ADMIN, Role.ADMIN, true],
+  ];
+
+  for (const [userRole, minRole, expected] of cases) {
+    it(`${userRole} vs minimum ${minRole} -> ${expected ? "allowed" : "denied"}`, () => {
+      assert.equal(hasMinRole(userRole, minRole), expected);
+    });
+  }
+});
 
 describe("authorize middleware", () => {
-  describe("no user on request (requireAuth not applied)", () => {
-    it("calls next with AuthenticationError", () => {
-      const err = run(authorize(Role.EMPLOYEE), makeReq());
-      assert.ok(err instanceof AuthenticationError);
-    });
+  it("calls next with AuthenticationError when there is no user", () => {
+    assert.ok(run({}, Role.EMPLOYEE) instanceof AuthenticationError);
   });
 
-  describe("EMPLOYEE role", () => {
-    it("is allowed when minimum role is EMPLOYEE", () => {
-      const err = run(authorize(Role.EMPLOYEE), makeReq(Role.EMPLOYEE));
-      assert.equal(err, undefined);
-    });
-
-    it("is denied when minimum role is MANAGER", () => {
-      const err = run(authorize(Role.MANAGER), makeReq(Role.EMPLOYEE));
-      assert.ok(err instanceof ForbiddenError);
-    });
-
-    it("is denied when minimum role is ADMIN", () => {
-      const err = run(authorize(Role.ADMIN), makeReq(Role.EMPLOYEE));
-      assert.ok(err instanceof ForbiddenError);
-    });
+  it("calls next with ForbiddenError when the role is too low", () => {
+    const err = run({ user: makeUser(Role.EMPLOYEE) }, Role.MANAGER);
+    assert.ok(err instanceof ForbiddenError);
   });
 
-  describe("MANAGER role", () => {
-    it("is allowed when minimum role is EMPLOYEE", () => {
-      const err = run(authorize(Role.EMPLOYEE), makeReq(Role.MANAGER));
-      assert.equal(err, undefined);
-    });
-
-    it("is allowed when minimum role is MANAGER", () => {
-      const err = run(authorize(Role.MANAGER), makeReq(Role.MANAGER));
-      assert.equal(err, undefined);
-    });
-
-    it("is denied when minimum role is ADMIN", () => {
-      const err = run(authorize(Role.ADMIN), makeReq(Role.MANAGER));
-      assert.ok(err instanceof ForbiddenError);
-    });
-  });
-
-  describe("ADMIN role", () => {
-    it("is allowed when minimum role is EMPLOYEE", () => {
-      const err = run(authorize(Role.EMPLOYEE), makeReq(Role.ADMIN));
-      assert.equal(err, undefined);
-    });
-
-    it("is allowed when minimum role is MANAGER", () => {
-      const err = run(authorize(Role.MANAGER), makeReq(Role.ADMIN));
-      assert.equal(err, undefined);
-    });
-
-    it("is allowed when minimum role is ADMIN", () => {
-      const err = run(authorize(Role.ADMIN), makeReq(Role.ADMIN));
-      assert.equal(err, undefined);
-    });
-  });
-
-  it("uses the lowest rank when multiple roles are passed", () => {
-    const middleware = authorize(Role.ADMIN, Role.MANAGER);
-    const err = run(middleware, makeReq(Role.MANAGER));
-    assert.equal(err, undefined);
+  it("calls next with no error when the role is sufficient", () => {
+    assert.equal(run({ user: makeUser(Role.MANAGER) }, Role.MANAGER), undefined);
   });
 });

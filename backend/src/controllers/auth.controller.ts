@@ -1,9 +1,15 @@
 import { NextFunction, Request, Response } from "express";
+import type { ParamsDictionary } from "express-serve-static-core";
 import { register, verifyCredentials } from "../services/auth.service";
 import { AuthenticatedRequest } from "../middleware/require-auth";
 import { clearSessionCookie, setSessionCookie } from "../lib/session";
+import { LoginInput, RegisterInput } from "../validation/auth.validation";
 
-export async function login(req: Request, res: Response, next: NextFunction): Promise<void> {
+export async function login(
+  req: Request<ParamsDictionary, unknown, LoginInput>,
+  res: Response,
+  next: NextFunction,
+): Promise<void> {
   try {
     const user = await verifyCredentials(req.body);
     setSessionCookie(res, user.id);
@@ -13,7 +19,11 @@ export async function login(req: Request, res: Response, next: NextFunction): Pr
   }
 }
 
-export async function registerUser(req: Request, res: Response, next: NextFunction): Promise<void> {
+export async function registerUser(
+  req: Request<ParamsDictionary, unknown, RegisterInput>,
+  res: Response,
+  next: NextFunction,
+): Promise<void> {
   try {
     const user = await register(req.body);
     setSessionCookie(res, user.id);
@@ -23,8 +33,8 @@ export async function registerUser(req: Request, res: Response, next: NextFuncti
   }
 }
 
-export function logout(req: Request, res: Response): void {
-  clearSessionCookie(req, res);
+export function logout(res: Response): void {
+  clearSessionCookie(res);
   res.status(204).end();
 }
 

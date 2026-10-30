@@ -1,14 +1,15 @@
 import { Router } from "express";
 import { login, registerUser, logout, getMe } from "../controllers/auth.controller";
 import { requireAuth } from "../middleware/require-auth";
-import { authorize } from "../middleware/authorize";
-import { Role } from "../generated/enums";
+import { loginRateLimiter } from "../middleware/rate-limiter";
+import { validateBody } from "../middleware/validate-body";
+import { loginSchema, registerSchema } from "../validation/auth.validation";
 
 const router = Router();
 
-router.post("/login", login);
-router.post("/register", registerUser);
-router.post("/logout", requireAuth, logout);
-router.get("/me", requireAuth, authorize(Role.EMPLOYEE), getMe);
+router.post("/login", loginRateLimiter, validateBody(loginSchema), login);
+router.post("/register", validateBody(registerSchema), registerUser);
+router.post("/logout", logout);
+router.get("/me", requireAuth, getMe);
 
 export default router;

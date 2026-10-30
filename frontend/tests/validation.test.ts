@@ -2,6 +2,7 @@ import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import { z } from "zod";
 import { registerSchema, loginSchema } from "../lib/validation";
+import { isSafeNextPath } from "../lib/safe-path";
 
 function fieldErrors<T extends z.ZodType>(schema: T, values: unknown): Record<string, string> {
   const result = schema.safeParse(values);
@@ -159,5 +160,53 @@ describe("registerSchema", () => {
   it("rejects mismatched confirmPassword", () => {
     const errs = fieldErrors(registerSchema, { ...validRegister, confirmPassword: "Different1" });
     assert.ok("confirmPassword" in errs);
+  });
+});
+
+describe("isSafeNextPath", () => {
+  it("accepts safe internal paths", () => {
+    assert.equal(isSafeNextPath("/my-inventory"), true);
+    assert.equal(isSafeNextPath("/dashboard"), true);
+    assert.equal(isSafeNextPath("/profile"), true);
+    assert.equal(isSafeNextPath("/inventory?page=2"), true);
+  });
+
+  it("rejects protocol-relative URLs", () => {
+    assert.equal(isSafeNextPath("//evil.com"), false);
+    assert.equal(isSafeNextPath("///evil.com"), false);
+  });
+
+  it("rejects backslashes in paths", () => {
+    assert.equal(isSafeNextPath("/\\evil.com"), false);
+    assert.equal(isSafeNextPath("/%5cevil.com"), false);
+  });
+
+  it("rejects paths containing control characters", () => {
+    assert.equal(isSafeNextPath("/\t/evil.com"), false);
+    assert.equal(isSafeNextPath("/\n/evil.com"), false);
+    assert.equal(isSafeNextPath("/\0/evil.com"), false);
+  });
+
+  it("rejects external URLs", () => {
+    assert.equal(isSafeNextPath("https://evil.com"), false);
+    assert.equal(isSafeNextPath("http://evil.com"), false);
+  });
+
+  it("rejects JavaScript URLs", () => {
+    assert.equal(isSafeNextPath("javascript:alert(1)"), false);
+  });
+
+  it("rejects paths that do not start with a slash", () => {
+    assert.equal(isSafeNextPath("my-inventory"), false);
+  });
+
+  it("rejects empty strings", () => {
+    assert.equal(isSafeNextPath(""), false);
+  });
+
+  it("rejects non-string values", () => {
+    assert.equal(isSafeNextPath(null), false);
+    assert.equal(isSafeNextPath(undefined), false);
+    assert.equal(isSafeNextPath(123), false);
   });
 });

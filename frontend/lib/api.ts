@@ -24,7 +24,6 @@ export interface ApiErrorBody {
 
 export interface ApiErrorDetail {
   message: string;
-  code: string;
   fields?: Record<string, string>;
 }
 
@@ -43,13 +42,12 @@ export async function apiRequest(path: string, init?: RequestInit): Promise<Resp
 
 export async function readApiError(res: Response): Promise<ApiErrorDetail> {
   try {
-    const body = (await res.json()) as ApiErrorBody & { message?: string; _tag?: string };
+    const body = (await res.json()) as ApiErrorBody;
     return {
-      message: body.error?.message ?? body.message ?? "Request failed",
-      code: body.error?.code ?? body._tag ?? "UNKNOWN",
+      message: body.error?.message ?? "Request failed",
       fields: body.error?.fields,
     };
   } catch {
-    return { message: "Request failed", code: "UNKNOWN" };
+    return { message: "Request failed" };
   }
 }

@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { getCurrentUser, homePathForRole } from "@/lib/auth";
+import { getCurrentUser } from "@/lib/auth";
 import { RegisterForm } from "@/components/register-form";
+import { homePathForRole } from "@/lib/navigation";
 
 export const instant = false;
 

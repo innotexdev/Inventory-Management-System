@@ -42,6 +42,12 @@ export class ForbiddenError extends HttpError {
   }
 }
 
+export class DuplicateEmailError extends HttpError {
+  constructor() {
+    super(409, "Email is already in use", "CONFLICT", { email: "Email is already in use" });
+  }
+}
+
 export type BodyParserErrorType = "entity.parse.failed" | "entity.too.large";
 
 const BODY_PARSER_ERRORS: Record<BodyParserErrorType, () => HttpError> = {
@@ -89,8 +95,6 @@ export function toHttpError(err: unknown): HttpError {
   return new HttpError(500, "Internal server error");
 }
 
-export function DuplicateEmailError(): HttpError {
-  return new HttpError(409, "Email is already in use", "CONFLICT", {
-    email: "Email is already in use",
-  });
+export function isUniqueViolation(err: unknown): boolean {
+  return hasPrismaCode(err, "P2002");
 }

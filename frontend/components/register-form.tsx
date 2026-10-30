@@ -1,12 +1,19 @@
 "use client";
 
-import { useForm } from "react-hook-form";
+import { Path, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { registerAction } from "@/lib/actions/auth";
 import { registerSchema, type RegisterValues } from "@/lib/validation";
 import { FormField } from "./form-field";
+import { applyServerErrors } from "@/lib/apply-server-errors";
 
-type FieldName = "firstName" | "lastName" | "email" | "password" | "confirmPassword";
+const REGISTER_FIELDS = [
+  "firstName",
+  "lastName",
+  "email",
+  "password",
+  "confirmPassword",
+] as const satisfies readonly Path<RegisterValues>[];
 
 export function RegisterForm() {
   const {
@@ -17,22 +24,7 @@ export function RegisterForm() {
   } = useForm<RegisterValues>({ resolver: zodResolver(registerSchema), mode: "onTouched" });
 
   async function onSubmit(values: RegisterValues) {
-    const result = await registerAction(values);
-    if (!result) {
-      return;
-    }
-
-    const names: FieldName[] = ["firstName", "lastName", "email", "password", "confirmPassword"];
-    let mapped = false;
-    for (const [field, message] of Object.entries(result.fieldErrors ?? {})) {
-      if (names.includes(field as FieldName)) {
-        setError(field as FieldName, { message });
-        mapped = true;
-      }
-    }
-    if (!mapped && result.formError) {
-      setError("root.server", { message: result.formError });
-    }
+    applyServerErrors(setError, REGISTER_FIELDS, await registerAction(values));
   }
 
   return (

@@ -1,108 +1,104 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
-import { parseLoginInput, parseRegisterInput } from "../../src/validation/auth.validation";
-import { ValidationError } from "../../src/lib/errors";
+import { ValidationError } from "../lib/errors";
+import { loginSchema, registerSchema, parseWith } from "../validation/auth.validation";
 
-function assertField(fn: () => unknown, field: string) {
-  try {
-    fn();
-    assert.fail("Expected ValidationError");
-  } catch (err) {
+function assertField(fn: () => unknown, field: string): void {
+  assert.throws(fn, (err: unknown) => {
     assert.ok(err instanceof ValidationError, `Expected ValidationError, got ${String(err)}`);
-    assert.ok(
-      err.fields !== undefined && field in err.fields,
-      `Expected field "${field}" in errors, got: ${JSON.stringify(err.fields)}`,
-    );
-  }
+    assert.ok(err.fields !== undefined && field in err.fields, `Expected error on "${field}"`);
+    return true;
+  });
 }
 
-describe("parseLoginInput", () => {
+const validRegister = {
+  firstName: "Ada",
+  lastName: "Lovelace",
+  email: "ada@example.com",
+  password: "Secret1234",
+  confirmPassword: "Secret1234",
+};
+
+describe("loginSchema", () => {
   it("accepts valid credentials", () => {
-    const result = parseLoginInput({ email: "user@example.com", password: "secret" });
+    const result = parseWith(loginSchema, { email: "user@example.com", password: "anypassword" });
     assert.equal(result.email, "user@example.com");
-    assert.equal(result.password, "secret");
+    assert.equal(result.password, "anypassword");
   });
 
   it("lowercases and trims email", () => {
-    const result = parseLoginInput({ email: "  User@Example.COM  ", password: "x" });
+    const result = parseWith(loginSchema, { email: "  User@Example.COM  ", password: "x" });
     assert.equal(result.email, "user@example.com");
   });
 
   it("rejects missing email", () => {
-    assertField(() => parseLoginInput({ password: "secret" }), "email");
+    assertField(() => parseWith(loginSchema, { password: "secret" }), "email");
   });
 
   it("rejects invalid email format", () => {
-    assertField(() => parseLoginInput({ email: "notanemail", password: "x" }), "email");
+    assertField(() => parseWith(loginSchema, { email: "notanemail", password: "x" }), "email");
   });
 
   it("rejects email exceeding 254 characters", () => {
     const long = "a".repeat(249) + "@b.com";
-    assertField(() => parseLoginInput({ email: long, password: "x" }), "email");
+    assert.equal(long.length, 255);
+    assertField(() => parseWith(loginSchema, { email: long, password: "x" }), "email");
   });
 
   it("rejects empty password", () => {
-    assertField(() => parseLoginInput({ email: "u@e.com", password: "" }), "password");
+    assertField(() => parseWith(loginSchema, { email: "u@e.com", password: "" }), "password");
   });
 
   it("rejects missing password", () => {
-    assertField(() => parseLoginInput({ email: "u@e.com" }), "password");
+    assertField(() => parseWith(loginSchema, { email: "u@e.com" }), "password");
   });
 });
 
-describe("parseRegisterInput", () => {
-  const valid = {
-    firstName: "Ada",
-    lastName: "Lovelace",
-    email: "ada@example.com",
-    password: "Secret1234",
-    confirmPassword: "Secret1234",
-  };
+describe("registerSchema", () => {
+  const parse = (input: unknown) => parseWith(registerSchema, input);
 
   it("accepts valid registration data", () => {
-    const result = parseRegisterInput(valid);
+    const result = parse(validRegister);
     assert.equal(result.firstName, "Ada");
     assert.equal(result.email, "ada@example.com");
   });
 
   it("lowercases email", () => {
-    const result = parseRegisterInput({ ...valid, email: "Ada@Example.COM" });
-    assert.equal(result.email, "ada@example.com");
+    assert.equal(parse({ ...validRegister, email: "Ada@Example.COM" }).email, "ada@example.com");
   });
 
   it("accepts names with accented characters and hyphens", () => {
-    const result = parseRegisterInput({ ...valid, firstName: "Ančka-Đorić" });
-    assert.equal(result.firstName, "Ančka-Đorić");
+    assert.equal(parse({ ...validRegister, firstName: "Ančka-Đorić" }).firstName, "Ančka-Đorić");
   });
 
   it("rejects firstName shorter than 2 characters", () => {
-    assertField(() => parseRegisterInput({ ...valid, firstName: "A" }), "firstName");
+    assertField(() => parse({ ...validRegister, firstName: "A" }), "firstName");
   });
 
   it("rejects firstName longer than 50 characters", () => {
-    assertField(() => parseRegisterInput({ ...valid, firstName: "A".repeat(51) }), "firstName");
+    assertField(() => parse({ ...validRegister, firstName: "A".repeat(51) }), "firstName");
   });
 
   it("rejects firstName with digits", () => {
-    assertField(() => parseRegisterInput({ ...valid, firstName: "Ada1" }), "firstName");
+    assertField(() => parse({ ...validRegister, firstName: "Ada1" }), "firstName");
   });
 
   it("rejects firstName of only spaces (trimmed to empty)", () => {
-    assertField(() => parseRegisterInput({ ...valid, firstName: "   " }), "firstName");
+    assertField(() => parse({ ...validRegister, firstName: "   " }), "firstName");
   });
 
   it("rejects lastName shorter than 2 characters", () => {
-    assertField(() => parseRegisterInput({ ...valid, lastName: "L" }), "lastName");
+    assertField(() => parse({ ...validRegister, lastName: "L" }), "lastName");
   });
 
   it("rejects missing email", () => {
-    const { email: _email, ...rest } = valid;
-    assertField(() => parseRegisterInput(rest), "email");
+    const { email: _email, ...rest } = validRegister;
+    assertField(() => parse(rest), "email");
   });
 
   it("rejects password shorter than 8 characters", () => {
     assertField(
-      () => parseRegisterInput({ ...valid, password: "Ab1", confirmPassword: "Ab1" }),
+      () => parse({ ...validRegister, password: "Ab1", confirmPassword: "Ab1" }),
       "password",
     );
   });
@@ -110,41 +106,35 @@ describe("parseRegisterInput", () => {
   it("rejects password longer than 64 characters", () => {
     const long = "Aa1" + "x".repeat(62);
     assertField(
-      () => parseRegisterInput({ ...valid, password: long, confirmPassword: long }),
+      () => parse({ ...validRegister, password: long, confirmPassword: long }),
       "password",
     );
   });
 
   it("rejects password without uppercase letter", () => {
-    assertField(
-      () => parseRegisterInput({ ...valid, password: "secret123", confirmPassword: "secret123" }),
-      "password",
-    );
+    const pw = "secret123";
+    assertField(() => parse({ ...validRegister, password: pw, confirmPassword: pw }), "password");
   });
 
   it("rejects password without lowercase letter", () => {
-    assertField(
-      () => parseRegisterInput({ ...valid, password: "SECRET123", confirmPassword: "SECRET123" }),
-      "password",
-    );
+    const pw = "SECRET123";
+    assertField(() => parse({ ...validRegister, password: pw, confirmPassword: pw }), "password");
   });
 
   it("rejects password without digit", () => {
-    assertField(
-      () => parseRegisterInput({ ...valid, password: "SecretPass", confirmPassword: "SecretPass" }),
-      "password",
-    );
+    const pw = "SecretPass";
+    assertField(() => parse({ ...validRegister, password: pw, confirmPassword: pw }), "password");
   });
 
   it("rejects mismatched confirmPassword", () => {
     assertField(
-      () => parseRegisterInput({ ...valid, confirmPassword: "Different1" }),
+      () => parse({ ...validRegister, confirmPassword: "Different1" }),
       "confirmPassword",
     );
   });
 
   it("ignores a role field sent by the client", () => {
-    const result = parseRegisterInput({ ...valid, role: "ADMIN" });
-    assert.ok(!("role" in result));
+    const result = parse({ ...validRegister, role: "ADMIN" });
+    assert.equal("role" in result, false);
   });
 });
