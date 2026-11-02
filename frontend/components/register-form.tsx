@@ -32,6 +32,7 @@ export function RegisterForm() {
       <FormField
         id="firstName"
         label="First name"
+        hint="Enter your first name."
         autoComplete="given-name"
         error={errors.firstName?.message}
         {...register("firstName")}
@@ -40,6 +41,7 @@ export function RegisterForm() {
         id="lastName"
         label="Last name"
         autoComplete="family-name"
+        hint="Enter your last name."
         error={errors.lastName?.message}
         {...register("lastName")}
       />
@@ -47,6 +49,7 @@ export function RegisterForm() {
         id="email"
         label="Email"
         type="email"
+        hint="Enter a valid email address (e.g. name@example.com)."
         autoComplete="email"
         error={errors.email?.message}
         {...register("email")}
@@ -56,6 +59,7 @@ export function RegisterForm() {
         label="Password"
         type="password"
         autoComplete="new-password"
+        hint="8 to 64 characters, with an uppercase letter, a lowercase letter and a digit."
         error={errors.password?.message}
         {...register("password")}
       />
@@ -64,6 +68,7 @@ export function RegisterForm() {
         label="Confirm password"
         type="password"
         autoComplete="new-password"
+        hint="Re-enter your password to confirm it."
         error={errors.confirmPassword?.message}
         {...register("confirmPassword")}
       />

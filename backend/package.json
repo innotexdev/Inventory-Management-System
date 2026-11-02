@@ -23,7 +23,7 @@
     "lint": "eslint . --max-warnings 0",
     "format": "prettier --check .",
     "format:write": "prettier --write .",
-    "test": "node --import tsx/esm --test src/tests/**/*.test.ts",
+    "test": "tsx --test --test-reporter=spec \"src/tests/**/*.test.ts\"",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

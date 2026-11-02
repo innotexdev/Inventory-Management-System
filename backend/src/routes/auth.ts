@@ -7,7 +7,7 @@ import { loginSchema, registerSchema } from "../validation/auth.validation";
 
 const router = Router();
 
-router.post("/login", loginRateLimiter, validateBody(loginSchema), login);
+router.post("/login", validateBody(loginSchema), loginRateLimiter, login);
 router.post("/register", validateBody(registerSchema), registerUser);
 router.post("/logout", logout);
 router.get("/me", requireAuth, getMe);

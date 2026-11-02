@@ -48,6 +48,12 @@ export class DuplicateEmailError extends HttpError {
   }
 }
 
+export class TooManyRequestsError extends HttpError {
+  constructor(message = "Request limit exceeded") {
+    super(429, message, "TOO_MANY_REQUESTS");
+  }
+}
+
 export type BodyParserErrorType = "entity.parse.failed" | "entity.too.large";
 
 const BODY_PARSER_ERRORS: Record<BodyParserErrorType, () => HttpError> = {

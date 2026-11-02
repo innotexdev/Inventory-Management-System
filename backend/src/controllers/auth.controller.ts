@@ -33,7 +33,7 @@ export async function registerUser(
   }
 }
 
-export function logout(res: Response): void {
+export function logout(_req: Request, res: Response): void {
   clearSessionCookie(res);
   res.status(204).end();
 }

@@ -1,7 +1,8 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import { ValidationError } from "../lib/errors";
-import { loginSchema, registerSchema, parseWith } from "../validation/auth.validation";
+import { loginSchema, registerSchema } from "../validation/auth.validation";
+import { parseWith } from "../middleware/validate-body";
 
 function assertField(fn: () => unknown, field: string): void {
   assert.throws(fn, (err: unknown) => {

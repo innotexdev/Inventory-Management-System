@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 };
 
 export default async function DashboardPage() {
-  const user = await requireRole(["MANAGER", "ADMIN"], "/dashboard");
+  const user = await requireRole("MANAGER", "/dashboard");
 
   return (
     <main className="flex w-full max-w-6xl flex-col gap-6 px-4 py-10">

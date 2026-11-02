@@ -19,7 +19,7 @@ interface SessionClaims {
   sub: string;
 }
 
-export function createSession(userId: string): string {
+export function createSessionToken(userId: string): string {
   return jwt.sign({ sub: userId } satisfies SessionClaims, env.JWT_SECRET, {
     expiresIn: SESSION_TTL_SECONDS,
     algorithm: "HS256",
@@ -41,9 +41,9 @@ export function getSessionUserId(token: string | undefined): string | null {
 }
 
 export function setSessionCookie(res: Response, userId: string): void {
-  const token = createSession(userId);
+  const token = createSessionToken(userId);
 
-  res.cookie(SESSION_COOKIE, token, sessionCookieOptions);
+  res.cookie(SESSION_COOKIE, token, { ...sessionCookieOptions, maxAge: SESSION_TTL_MS });
 }
 
 export function getSessionCookie(req: Request): string | undefined {

@@ -1,17 +1,4 @@
 import { z } from "zod";
-import { ValidationError } from "../lib/errors";
-
-export function parseWith<T extends z.ZodType>(schema: T, input: unknown): z.infer<T> {
-  const result = schema.safeParse(input);
-  if (result.success) {
-    return result.data;
-  }
-  const fields: Record<string, string> = {};
-  for (const issue of result.error.issues) {
-    fields[String(issue.path[0] ?? "body")] ??= issue.message;
-  }
-  throw new ValidationError("Some fields are invalid", fields);
-}
 
 const emailSchema = z
   .string({ error: "Email is required" })

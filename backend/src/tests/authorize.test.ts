@@ -29,22 +29,21 @@ function run(req: Partial<AuthenticatedRequest>, minimumRole: Role): unknown {
 }
 
 describe("hasMinRole", () => {
-  const cases: Array<[Role, Role, boolean]> = [
-    // [user role, minimum role, expected]
-    [Role.EMPLOYEE, Role.EMPLOYEE, true],
-    [Role.EMPLOYEE, Role.MANAGER, false],
-    [Role.EMPLOYEE, Role.ADMIN, false],
-    [Role.MANAGER, Role.EMPLOYEE, true],
-    [Role.MANAGER, Role.MANAGER, true],
-    [Role.MANAGER, Role.ADMIN, false],
-    [Role.ADMIN, Role.EMPLOYEE, true],
-    [Role.ADMIN, Role.MANAGER, true],
-    [Role.ADMIN, Role.ADMIN, true],
+  const cases: Array<{ role: Role; minRole: Role; allowed: boolean }> = [
+    { role: Role.EMPLOYEE, minRole: Role.EMPLOYEE, allowed: true },
+    { role: Role.EMPLOYEE, minRole: Role.MANAGER, allowed: false },
+    { role: Role.EMPLOYEE, minRole: Role.ADMIN, allowed: false },
+    { role: Role.MANAGER, minRole: Role.EMPLOYEE, allowed: true },
+    { role: Role.MANAGER, minRole: Role.MANAGER, allowed: true },
+    { role: Role.MANAGER, minRole: Role.ADMIN, allowed: false },
+    { role: Role.ADMIN, minRole: Role.EMPLOYEE, allowed: true },
+    { role: Role.ADMIN, minRole: Role.MANAGER, allowed: true },
+    { role: Role.ADMIN, minRole: Role.ADMIN, allowed: true },
   ];
 
-  for (const [userRole, minRole, expected] of cases) {
-    it(`${userRole} vs minimum ${minRole} -> ${expected ? "allowed" : "denied"}`, () => {
-      assert.equal(hasMinRole(userRole, minRole), expected);
+  for (const { role, minRole, allowed } of cases) {
+    it(`${role} vs minimum ${minRole} -> ${allowed ? "allowed" : "denied"}`, () => {
+      assert.equal(hasMinRole(role, minRole), allowed);
     });
   }
 });

@@ -18,21 +18,18 @@ export function hasMinRole(role: Role | null | undefined, minimumRole: Role): bo
 
 export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
   const cookieHeader = (await cookies()).toString();
-  try {
-    const res = await apiRequest("/api/auth/me", { headers: { cookie: cookieHeader } });
-    if (res.status === 401) {
-      return null;
-    }
 
-    if (!res.ok) {
-      throw new Error(`GET /api/auth/me failed with ${res.status}`);
-    }
-
-    const body = (await res.json()) as { data: CurrentUser };
-    return body.data;
-  } catch {
+  const res = await apiRequest("/api/auth/me", { headers: { cookie: cookieHeader } });
+  if (res.status === 401) {
     return null;
   }
+
+  if (!res.ok) {
+    throw new Error(`GET /api/auth/me failed with ${res.status}`);
+  }
+
+  const { data } = (await res.json()) as { data: CurrentUser };
+  return data;
 });
 
 export async function requireUser(nextPath?: string): Promise<CurrentUser> {
@@ -47,14 +44,10 @@ export async function requireUser(nextPath?: string): Promise<CurrentUser> {
   return user;
 }
 
-export async function requireRole(allowed: Role[], nextPath?: string): Promise<CurrentUser> {
+export async function requireRole(minRole: Role, nextPath?: string): Promise<CurrentUser> {
   const user = await requireUser(nextPath);
-
-  const requiredRank = Math.min(...allowed.map((role) => RANK[role]));
-
-  if (RANK[user.role] < requiredRank) {
+  if (!hasMinRole(user.role, minRole)) {
     forbidden();
   }
-
   return user;
 }

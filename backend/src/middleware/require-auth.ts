@@ -13,8 +13,8 @@ export interface AuthenticatedRequest extends Request {
 
 export async function requireAuth(req: Request, res: Response, next: NextFunction) {
   try {
-    const sessionId = getSessionCookie(req);
-    const userId = getSessionUserId(sessionId);
+    const token = getSessionCookie(req);
+    const userId = getSessionUserId(token);
     if (!userId) {
       throw new AuthenticationError("Not authenticated");
     }

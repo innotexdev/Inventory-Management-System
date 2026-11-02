@@ -1,10 +1,9 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { cookies } from "next/headers";
 import type { ZodError } from "zod";
 import { apiRequest, readApiError, type CurrentUser } from "@/lib/api";
-import { forwardSessionCookie } from "@/lib/cookie";
+import { deleteSessionCookie, forwardSessionCookie } from "@/lib/cookie";
 import { homePathForRole } from "@/lib/navigation";
 import {
   loginSchema,
@@ -12,7 +11,7 @@ import {
   type LoginValues,
   type RegisterValues,
 } from "@/lib/validation";
-import { SESSION_COOKIE } from "@/constant";
+
 import { isSafeNextPath } from "../safe-path";
 
 export interface AuthActionState {
@@ -85,10 +84,10 @@ export async function registerAction(values: RegisterValues): Promise<AuthAction
   const result = await postAuth("/api/auth/register", parsed.data);
   if ("error" in result) return result.error;
 
-  redirect("/my-inventory");
+  redirect(homePathForRole(result.user.role));
 }
 
 export async function logoutAction(): Promise<void> {
-  (await cookies()).delete(SESSION_COOKIE);
+  await deleteSessionCookie();
   redirect("/login");
 }
