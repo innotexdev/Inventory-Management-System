@@ -27,7 +27,6 @@ export function LoginForm({ next }: { next: string }) {
         label="Email"
         type="email"
         autoComplete="email"
-        hint="Enter a valid email address (e.g. name@example.com)."
         error={errors.email?.message}
         {...register("email")}
       />
@@ -35,7 +34,6 @@ export function LoginForm({ next }: { next: string }) {
         id="password"
         label="Password"
         type="password"
-        hint="8 to 64 characters, with an uppercase letter, a lowercase letter and a digit."
         autoComplete="current-password"
         error={errors.password?.message}
         {...register("password")}

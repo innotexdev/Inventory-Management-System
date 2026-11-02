@@ -4,8 +4,6 @@ import { forbidden, redirect } from "next/navigation";
 import { apiRequest, type CurrentUser, type Role } from "./api";
 import { isSafeNextPath } from "./safe-path";
 
-export type { CurrentUser, Role } from "./api";
-
 const RANK: Record<Role, number> = {
   EMPLOYEE: 0,
   MANAGER: 1,

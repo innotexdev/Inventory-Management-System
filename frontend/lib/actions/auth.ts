@@ -11,8 +11,7 @@ import {
   type LoginValues,
   type RegisterValues,
 } from "@/lib/validation";
-
-import { isSafeNextPath } from "../safe-path";
+import { isSafeNextPath } from "@/lib/safe-path";
 
 export interface AuthActionState {
   fieldErrors?: Record<string, string>;

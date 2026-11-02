@@ -23,7 +23,7 @@ export function FormField({ id, label, hint, error, required = true, ...props }:
         {label}
       </label>
       {hint ? (
-        <p id={hintId} className="text-[11px] text-zinc-600 dark:text-zinc-400">
+        <p id={hintId} className="text-xs text-zinc-600 dark:text-zinc-400">
           {hint}
         </p>
       ) : null}

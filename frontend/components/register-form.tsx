@@ -32,7 +32,7 @@ export function RegisterForm() {
       <FormField
         id="firstName"
         label="First name"
-        hint="Enter your first name."
+        hint="2 to 50 characters. Letters, spaces, hyphens and apostrophes only."
         autoComplete="given-name"
         error={errors.firstName?.message}
         {...register("firstName")}
@@ -41,7 +41,7 @@ export function RegisterForm() {
         id="lastName"
         label="Last name"
         autoComplete="family-name"
-        hint="Enter your last name."
+        hint="2 to 50 characters. Letters, spaces, hyphens and apostrophes only."
         error={errors.lastName?.message}
         {...register("lastName")}
       />

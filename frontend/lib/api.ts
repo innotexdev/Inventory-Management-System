@@ -14,7 +14,7 @@ export interface CurrentUser {
   team: { id: string; name: string } | null;
 }
 
-export interface ApiErrorBody {
+interface ApiErrorBody {
   error?: {
     code?: string;
     message?: string;
@@ -27,7 +27,7 @@ export interface ApiErrorDetail {
   fields?: Record<string, string>;
 }
 
-export function apiUrl(path: string): string {
+function apiUrl(path: string): string {
   const base = env.NEXT_PUBLIC_API_URL;
   return `${base}${path}`;
 }

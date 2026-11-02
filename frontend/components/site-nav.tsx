@@ -5,7 +5,7 @@ import { LogoutButton } from "./logout-button";
 import { SiteHeader } from "./site-header";
 
 export async function SiteNav() {
-  const user = await getCurrentUser();
+  const user = await getCurrentUser().catch(() => null);
   const links = linksForRole(user?.role ?? null);
 
   return (
