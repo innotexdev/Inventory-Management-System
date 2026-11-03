@@ -2,7 +2,7 @@ import { cookies } from "next/headers";
 
 const SESSION_COOKIE = "sid";
 const SESSION_COOKIE_PATTERN = new RegExp(`^${SESSION_COOKIE}=([^;]*)`);
-export const SESSION_MAX_AGE_SECONDS = 7 * 24 * 60 * 60 * 1000;
+export const SESSION_MAX_AGE_SECONDS = 7 * 24 * 60 * 60;
 
 const sessionCookieOptions = {
   httpOnly: true,

@@ -49,7 +49,6 @@ export function RegisterForm() {
         id="email"
         label="Email"
         type="email"
-        hint="Enter a valid email address (e.g. name@example.com)."
         autoComplete="email"
         error={errors.email?.message}
         {...register("email")}
@@ -68,7 +67,6 @@ export function RegisterForm() {
         label="Confirm password"
         type="password"
         autoComplete="new-password"
-        hint="Re-enter your password to confirm it."
         error={errors.confirmPassword?.message}
         {...register("confirmPassword")}
       />
