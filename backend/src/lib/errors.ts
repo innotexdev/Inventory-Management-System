@@ -104,3 +104,7 @@ export function toHttpError(err: unknown): HttpError {
 export function isUniqueViolation(err: unknown): boolean {
   return hasPrismaCode(err, "P2002");
 }
+
+export function isRecordNotFound(err: unknown): boolean {
+  return hasPrismaCode(err, "P2025");
+}

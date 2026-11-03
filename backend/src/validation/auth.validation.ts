@@ -8,7 +8,7 @@ const emailSchema = z
   .max(254, "Email must be at most 254 characters")
   .regex(/^\S+@\S+\.\S+$/, "Enter a valid email address");
 
-const nameSchema = (field: string) =>
+export const nameSchema = (field: string) =>
   z
     .string({ error: `${field} is required` })
     .trim()

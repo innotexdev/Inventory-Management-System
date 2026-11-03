@@ -1,7 +1,7 @@
 import { after, before, describe, it } from "node:test";
 import assert from "node:assert/strict";
 import type { AddressInfo } from "node:net";
-import app from "../app";
+import app from "../../app";
 
 describe("Auth routes", () => {
   let server: ReturnType<typeof app.listen>;

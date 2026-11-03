@@ -3,6 +3,7 @@ import cookieParser from "cookie-parser";
 import cors from "cors";
 import healthRouter from "./routes/health";
 import authRouter from "./routes/auth";
+import userRouter from "./routes/user";
 import { notFound } from "./middleware/notFound";
 import { errorHandler } from "./middleware/errorHandler";
 import { swaggerSpec } from "./lib/swagger";
@@ -25,6 +26,7 @@ app.use(cookieParser());
 
 app.use("/api/health", healthRouter);
 app.use("/api/auth", authRouter);
+app.use("/api/users", userRouter);
 
 if (env.NODE_ENV !== "production") {
   app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));

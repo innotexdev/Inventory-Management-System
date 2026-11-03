@@ -1,10 +1,10 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import type { Request, Response } from "express";
-import { authorize, hasMinRole } from "../middleware/authorize";
-import { AuthenticationError, ForbiddenError } from "../lib/errors";
-import { Role } from "../generated/enums";
-import type { AuthenticatedRequest, AuthenticatedUser } from "../middleware/require-auth";
+import { authorize, hasMinRole } from "../../middleware/authorize";
+import { AuthenticationError, ForbiddenError } from "../../lib/errors";
+import { Role } from "../../generated/enums";
+import type { AuthenticatedRequest, AuthenticatedUser } from "../../middleware/require-auth";
 
 function makeUser(role: Role): AuthenticatedUser {
   return {
