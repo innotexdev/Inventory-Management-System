@@ -1,9 +1,9 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import type { ZodError } from "zod";
 import { apiRequest, readApiError, type CurrentUser } from "@/lib/api";
 import { deleteSessionCookie, forwardSessionCookie } from "@/lib/cookie";
+import { flattenZodErrors } from "@/lib/flatten-zod-errors";
 import { homePathForRole } from "@/lib/navigation";
 import {
   loginSchema,
@@ -16,15 +16,6 @@ import { isSafeNextPath } from "@/lib/safe-path";
 export interface AuthActionState {
   fieldErrors?: Record<string, string>;
   formError?: string;
-}
-
-function flattenZodErrors(error: ZodError): Record<string, string> {
-  const fields: Record<string, string> = {};
-  for (const issue of error.issues) {
-    const key = String(issue.path[0] ?? "form");
-    fields[key] ??= issue.message;
-  }
-  return fields;
 }
 
 function safeRedirectTarget(nextPath: string | undefined): string | null {

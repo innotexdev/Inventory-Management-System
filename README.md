@@ -9,6 +9,17 @@ repo/
   frontend/   Next.js App Router + TypeScript strict (port 3000)
 ```
 
+## Milestones
+
+- Milestone 1 — repository setup, database schema, migrations, seed script,
+  tooling (ESLint, Prettier, TypeScript strict).
+- Milestone 2 — authentication: register, log in, log out, session in an
+  httpOnly cookie, route protection, role guard, 403 and 404 pages.
+- Milestone 3 — profile and my inventory: `/profile` (view account details,
+  edit name, change password) and `/my-inventory` (current assigned items
+  with assigned dates, assignment history, empty states). Navigation shows
+  role-appropriate links for every signed-in user.
+
 ## Prerequisites
 
 - Node.js 20.19+, 22.12+, or 24+ (the range Prisma 7 requires; see `engines` in each `package.json`)

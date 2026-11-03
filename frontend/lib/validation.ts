@@ -46,5 +46,31 @@ export const loginSchema = z.object({
   password: z.string({ error: "Password is required" }).min(1, "Password is required"),
 });
 
+export const updateProfileSchema = z.object({
+  firstName: nameField("First name"),
+  lastName: nameField("Last name"),
+});
+
+const currentPasswordField = z
+  .string({ error: "Current password is required" })
+  .min(1, "Current password is required");
+
+export const changePasswordSchema = z
+  .object({
+    currentPassword: currentPasswordField,
+    newPassword: newPasswordField,
+    confirmPassword: z.string({ error: "Confirm password is required" }),
+  })
+  .refine((data) => data.newPassword === data.confirmPassword, {
+    path: ["confirmPassword"],
+    message: "Passwords do not match",
+  })
+  .refine((data) => data.newPassword !== data.currentPassword, {
+    path: ["newPassword"],
+    message: "New password must be different from the current password",
+  });
+
 export type RegisterValues = z.infer<typeof registerSchema>;
 export type LoginValues = z.infer<typeof loginSchema>;
+export type UpdateProfileValues = z.infer<typeof updateProfileSchema>;
+export type ChangePasswordValues = z.infer<typeof changePasswordSchema>;

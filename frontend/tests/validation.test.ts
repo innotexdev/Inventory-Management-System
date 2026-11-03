@@ -1,7 +1,12 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import { z } from "zod";
-import { registerSchema, loginSchema } from "../lib/validation";
+import {
+  registerSchema,
+  loginSchema,
+  updateProfileSchema,
+  changePasswordSchema,
+} from "../lib/validation";
 import { isSafeNextPath } from "../lib/safe-path";
 
 function fieldErrors<T extends z.ZodType>(schema: T, values: unknown): Record<string, string> {
@@ -206,5 +211,157 @@ describe("isSafeNextPath", () => {
     assert.equal(isSafeNextPath(null), false);
     assert.equal(isSafeNextPath(undefined), false);
     assert.equal(isSafeNextPath(123), false);
+  });
+});
+
+describe("updateProfileSchema", () => {
+  const validProfile = { firstName: "Ada", lastName: "Lovelace" };
+
+  it("accepts valid names", () => {
+    const result = updateProfileSchema.safeParse(validProfile);
+    assert.ok(result.success);
+  });
+
+  it("accepts names with accented characters, hyphens and apostrophes", () => {
+    const result = updateProfileSchema.safeParse({
+      firstName: "Ančka-Đorić",
+      lastName: "O'Malley",
+    });
+    assert.ok(result.success);
+  });
+
+  it("trims surrounding spaces", () => {
+    const result = updateProfileSchema.safeParse({
+      firstName: "  Ada  ",
+      lastName: "  Lovelace  ",
+    });
+    assert.ok(result.success);
+    assert.equal(result.data?.firstName, "Ada");
+    assert.equal(result.data?.lastName, "Lovelace");
+  });
+
+  it("rejects firstName shorter than 2 characters", () => {
+    const errs = fieldErrors(updateProfileSchema, { ...validProfile, firstName: "A" });
+    assert.ok("firstName" in errs);
+  });
+
+  it("rejects firstName longer than 50 characters", () => {
+    const errs = fieldErrors(updateProfileSchema, { ...validProfile, firstName: "A".repeat(51) });
+    assert.ok("firstName" in errs);
+  });
+
+  it("rejects firstName of only spaces", () => {
+    const errs = fieldErrors(updateProfileSchema, { ...validProfile, firstName: "   " });
+    assert.ok("firstName" in errs);
+  });
+
+  it("rejects firstName with digits", () => {
+    const errs = fieldErrors(updateProfileSchema, { ...validProfile, firstName: "Ada1" });
+    assert.ok("firstName" in errs);
+  });
+
+  it("rejects lastName shorter than 2 characters", () => {
+    const errs = fieldErrors(updateProfileSchema, { ...validProfile, lastName: "L" });
+    assert.ok("lastName" in errs);
+  });
+
+  it("rejects lastName longer than 50 characters", () => {
+    const errs = fieldErrors(updateProfileSchema, { ...validProfile, lastName: "L".repeat(51) });
+    assert.ok("lastName" in errs);
+  });
+
+  it("rejects missing lastName", () => {
+    const errs = fieldErrors(updateProfileSchema, { firstName: "Ada" });
+    assert.ok("lastName" in errs);
+  });
+});
+
+describe("changePasswordSchema", () => {
+  const validPasswordChange = {
+    currentPassword: "OldSecret1",
+    newPassword: "NewSecret1",
+    confirmPassword: "NewSecret1",
+  };
+
+  it("accepts a valid password change", () => {
+    const result = changePasswordSchema.safeParse(validPasswordChange);
+    assert.ok(result.success);
+  });
+
+  it("rejects an empty current password", () => {
+    const errs = fieldErrors(changePasswordSchema, {
+      ...validPasswordChange,
+      currentPassword: "",
+    });
+    assert.ok("currentPassword" in errs);
+  });
+
+  it("rejects a missing current password", () => {
+    const { currentPassword: _currentPassword, ...rest } = validPasswordChange;
+    const errs = fieldErrors(changePasswordSchema, rest);
+    assert.ok("currentPassword" in errs);
+  });
+
+  it("rejects a new password shorter than 8 characters", () => {
+    const errs = fieldErrors(changePasswordSchema, {
+      ...validPasswordChange,
+      newPassword: "Ab1",
+      confirmPassword: "Ab1",
+    });
+    assert.ok("newPassword" in errs);
+  });
+
+  it("rejects a new password longer than 64 characters", () => {
+    const long = "Aa1" + "x".repeat(62);
+    const errs = fieldErrors(changePasswordSchema, {
+      ...validPasswordChange,
+      newPassword: long,
+      confirmPassword: long,
+    });
+    assert.ok("newPassword" in errs);
+  });
+
+  it("rejects a new password without an uppercase letter", () => {
+    const errs = fieldErrors(changePasswordSchema, {
+      ...validPasswordChange,
+      newPassword: "newsecret1",
+      confirmPassword: "newsecret1",
+    });
+    assert.ok("newPassword" in errs);
+  });
+
+  it("rejects a new password without a lowercase letter", () => {
+    const errs = fieldErrors(changePasswordSchema, {
+      ...validPasswordChange,
+      newPassword: "NEWSECRET1",
+      confirmPassword: "NEWSECRET1",
+    });
+    assert.ok("newPassword" in errs);
+  });
+
+  it("rejects a new password without a digit", () => {
+    const errs = fieldErrors(changePasswordSchema, {
+      ...validPasswordChange,
+      newPassword: "NewSecretPass",
+      confirmPassword: "NewSecretPass",
+    });
+    assert.ok("newPassword" in errs);
+  });
+
+  it("rejects mismatched confirm password", () => {
+    const errs = fieldErrors(changePasswordSchema, {
+      ...validPasswordChange,
+      confirmPassword: "Different1",
+    });
+    assert.ok("confirmPassword" in errs);
+  });
+
+  it("rejects a new password equal to the current password", () => {
+    const errs = fieldErrors(changePasswordSchema, {
+      currentPassword: "Secret1234",
+      newPassword: "Secret1234",
+      confirmPassword: "Secret1234",
+    });
+    assert.ok("newPassword" in errs);
   });
 });

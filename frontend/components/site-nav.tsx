@@ -2,6 +2,7 @@ import Link from "next/link";
 import { getCurrentUser } from "@/lib/auth";
 import { linksForRole } from "@/lib/navigation";
 import { LogoutButton } from "./logout-button";
+import { MobileNav } from "./mobile-nav";
 import { SiteHeader } from "./site-header";
 
 export async function SiteNav() {
@@ -10,7 +11,7 @@ export async function SiteNav() {
 
   return (
     <SiteHeader>
-      <div className="flex items-center gap-2">
+      <div className="hidden items-center gap-2 md:flex">
         {links.map((link) => (
           <Link
             key={link.href}
@@ -23,6 +24,8 @@ export async function SiteNav() {
 
         {user ? <LogoutButton /> : null}
       </div>
+
+      <MobileNav links={links} isAuthenticated={user != null} />
     </SiteHeader>
   );
 }

@@ -2,6 +2,8 @@ import { env } from "@/config";
 
 export type Role = "EMPLOYEE" | "MANAGER" | "ADMIN";
 
+export type ItemStatus = "AVAILABLE" | "ASSIGNED" | "IN_REPAIR" | "RETIRED";
+
 export interface CurrentUser {
   id: string;
   firstName: string;
@@ -12,6 +14,39 @@ export interface CurrentUser {
   isActive: boolean;
   createdAt: string;
   team: { id: string; name: string } | null;
+}
+
+export interface ItemCategory {
+  id: string;
+  name: string;
+}
+
+export interface HeldItem {
+  id: string;
+  assetTag: string;
+  name: string;
+  brand: string | null;
+  model: string | null;
+  serialNumber: string | null;
+  status: ItemStatus;
+  category: ItemCategory;
+}
+
+export interface AssignmentPerson {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+}
+
+export interface UserAssignment {
+  id: string;
+  assignedAt: string;
+  returnedAt: string | null;
+  note: string | null;
+  item: HeldItem;
+  assignedBy: AssignmentPerson;
+  returnedBy: AssignmentPerson | null;
 }
 
 interface ApiErrorBody {

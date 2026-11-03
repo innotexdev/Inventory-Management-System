@@ -1,10 +1,14 @@
 import type { FieldValues, Path, UseFormSetError } from "react-hook-form";
-import type { AuthActionState } from "@/lib/actions/auth";
+
+export interface ServerActionState {
+  fieldErrors?: Record<string, string>;
+  formError?: string;
+}
 
 export function applyServerErrors<T extends FieldValues>(
   setError: UseFormSetError<T>,
   fields: readonly Path<T>[],
-  result: AuthActionState,
+  result: ServerActionState,
 ): void {
   const matched = fields.filter((field) => result.fieldErrors?.[field] !== undefined);
   for (const field of matched) {
