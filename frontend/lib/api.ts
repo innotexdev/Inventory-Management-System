@@ -77,10 +77,16 @@ export async function apiRequest(path: string, init?: RequestInit): Promise<Resp
 
 export async function readApiError(res: Response): Promise<ApiErrorDetail> {
   try {
-    const body = (await res.json()) as ApiErrorBody;
+    const body = (await res.json()) as ApiErrorBody & { message?: string };
+    const message =
+      (typeof body?.error === "object" ? body?.error?.message : undefined) ??
+      (typeof body?.error === "string" ? body.error : undefined) ??
+      (typeof body?.message === "string" ? body.message : undefined) ??
+      "Request failed";
+    const fields = typeof body?.error === "object" ? body?.error?.fields : undefined;
     return {
-      message: body.error?.message ?? "Request failed",
-      fields: body.error?.fields,
+      message,
+      fields,
     };
   } catch {
     return { message: "Request failed" };

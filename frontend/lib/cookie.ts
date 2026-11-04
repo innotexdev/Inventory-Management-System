@@ -12,7 +12,12 @@ const sessionCookieOptions = {
 } as const;
 
 export async function forwardSessionCookie(res: Response): Promise<void> {
-  for (const header of res.headers.getSetCookie()) {
+  const setCookies =
+    typeof res.headers.getSetCookie === "function" ? res.headers.getSetCookie() : [];
+  const rawHeader = res.headers.get("set-cookie");
+  const headers = setCookies.length > 0 ? setCookies : rawHeader ? [rawHeader] : [];
+
+  for (const header of headers) {
     const value = SESSION_COOKIE_PATTERN.exec(header)?.[1];
     if (value) {
       (await cookies()).set(SESSION_COOKIE, decodeURIComponent(value), {

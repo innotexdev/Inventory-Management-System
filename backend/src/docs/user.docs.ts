@@ -6,7 +6,7 @@ export const userDocs: OpenApiFragment = {
       patch: {
         tags: ["Users"],
         summary: "Update my profile",
-        description: "Updates the authenticated user's first and last name.",
+        description: "Updates the authenticated user's first name, last name, or both.",
         security: [{ bearerAuth: [] }],
         requestBody: {
           required: true,
@@ -16,8 +16,8 @@ export const userDocs: OpenApiFragment = {
                 $ref: "#/components/schemas/UpdateUser",
               },
               example: {
-                firstName: "Innocent",
-                lastName: "Akuh",
+                firstName: "John",
+                lastName: "Doe",
               },
             },
           },
@@ -25,6 +25,18 @@ export const userDocs: OpenApiFragment = {
         responses: {
           200: {
             description: "Profile updated successfully",
+            content: {
+              "application/json": {
+                example: {
+                  data: {
+                    id: "user-id",
+                    firstName: "John",
+                    lastName: "Doe",
+                    email: "john@example.com",
+                  },
+                },
+              },
+            },
           },
           400: {
             description: "Invalid request body or no fields to update",
@@ -38,44 +50,92 @@ export const userDocs: OpenApiFragment = {
         },
       },
     },
+
     "/api/users/me/password": {
       patch: {
-        summary: "Change current user's password",
         tags: ["Users"],
+        summary: "Change my password",
+        description:
+          "Changes the authenticated user's password after verifying the current password.",
+        security: [{ bearerAuth: [] }],
         requestBody: {
           required: true,
           content: {
             "application/json": {
-              schema: { $ref: "#/components/schemas/UpdatePassword" },
+              schema: {
+                $ref: "#/components/schemas/UpdatePassword",
+              },
             },
           },
         },
         responses: {
-          200: { description: "Password changed successfully" },
-          400: { description: "Invalid input or incorrect current password" },
-          401: { description: "No session" },
+          200: {
+            description: "Password changed successfully",
+            content: {
+              "application/json": {
+                example: {
+                  data: {
+                    message: "Password changed successfully",
+                  },
+                },
+              },
+            },
+          },
+          400: {
+            description: "Invalid input or incorrect current password",
+          },
+          401: {
+            description: "Unauthorized",
+          },
         },
       },
     },
 
     "/api/users/me/items": {
       get: {
-        summary: "List items currently assigned to the authenticated user",
         tags: ["Users"],
+        summary: "Get my currently assigned items",
+        description: "Returns inventory items currently assigned to the authenticated user.",
+        security: [{ bearerAuth: [] }],
         responses: {
-          200: { description: "Current assigned items" },
-          401: { description: "No session" },
+          200: {
+            description: "Currently assigned items retrieved successfully",
+            content: {
+              "application/json": {
+                example: {
+                  data: [],
+                },
+              },
+            },
+          },
+          401: {
+            description: "Unauthorized",
+          },
         },
       },
     },
 
     "/api/users/me/assignments": {
       get: {
-        summary: "List assignment history for the authenticated user",
         tags: ["Users"],
+        summary: "Get my assignment history",
+        description:
+          "Returns the authenticated user's assignment history, including returned items.",
+        security: [{ bearerAuth: [] }],
         responses: {
-          200: { description: "User assignment history, including returned items" },
-          401: { description: "No session" },
+          200: {
+            description: "Assignment history retrieved successfully",
+            content: {
+              "application/json": {
+                example: {
+                  data: [],
+                },
+              },
+            },
+          },
+          401: {
+            description: "Unauthorized",
+          },
         },
       },
     },

@@ -11,7 +11,8 @@ export async function getMyItems(): Promise<HeldItem[]> {
   if (!res.ok) {
     throw new Error(`GET /api/users/me/items failed with ${res.status}`);
   }
-  return (await res.json()) as HeldItem[];
+  const { data } = (await res.json()) as { data: HeldItem[] };
+  return data;
 }
 
 export async function getMyAssignments(): Promise<UserAssignment[]> {
@@ -19,5 +20,6 @@ export async function getMyAssignments(): Promise<UserAssignment[]> {
   if (!res.ok) {
     throw new Error(`GET /api/users/me/assignments failed with ${res.status}`);
   }
-  return (await res.json()) as UserAssignment[];
+  const { data } = (await res.json()) as { data: UserAssignment[] };
+  return data;
 }

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import type { NavLink } from "@/lib/navigation";
 import { LogoutButton } from "./logout-button";
 
@@ -14,16 +14,13 @@ interface MobileNavProps {
 export function MobileNav({ links, isAuthenticated }: MobileNavProps) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
-  const containerRef = useRef<HTMLDivElement>(null);
 
-  // Close the menu whenever the route changes by adjusting state during render.
   const [previousPathname, setPreviousPathname] = useState(pathname);
   if (previousPathname !== pathname) {
     setPreviousPathname(pathname);
     setOpen(false);
   }
 
-  // Close on Escape or on a click/tap outside the menu.
   useEffect(() => {
     if (!open) {
       return;
@@ -35,22 +32,18 @@ export function MobileNav({ links, isAuthenticated }: MobileNavProps) {
       }
     }
 
-    function onPointerDown(event: PointerEvent) {
-      if (!containerRef.current?.contains(event.target as Node)) {
-        setOpen(false);
-      }
-    }
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
 
     document.addEventListener("keydown", onKeyDown);
-    document.addEventListener("pointerdown", onPointerDown);
     return () => {
+      document.body.style.overflow = originalOverflow;
       document.removeEventListener("keydown", onKeyDown);
-      document.removeEventListener("pointerdown", onPointerDown);
     };
   }, [open]);
 
   return (
-    <div ref={containerRef} className="relative md:hidden">
+    <div className="md:hidden">
       <button
         type="button"
         aria-expanded={open}
@@ -88,32 +81,37 @@ export function MobileNav({ links, isAuthenticated }: MobileNavProps) {
         )}
       </button>
 
-      {open ? (
-        <div
-          id="mobile-nav-menu"
-          className="absolute right-0 z-50 mt-2 w-56 overflow-hidden rounded-2xl border border-zinc-200 bg-white py-2 shadow-lg dark:border-zinc-800 dark:bg-zinc-950"
-        >
-          {links.map((link) => (
+      <div
+        id="mobile-nav-menu"
+        aria-hidden={!open}
+        className={`fixed inset-x-0 bottom-0 top-16 z-40 flex flex-col overflow-y-auto bg-white px-6 pb-8 pt-4 transition-[opacity,transform,visibility] duration-300 ease-out will-change-[opacity,transform] motion-reduce:transition-none dark:bg-zinc-950 ${
+          open
+            ? "visible translate-y-0 opacity-100"
+            : "pointer-events-none invisible -translate-y-2 opacity-0"
+        }`}
+      >
+        <nav className="flex flex-col">
+          {links.map((link, index) => (
             <Link
               key={link.href}
               href={link.href}
               onClick={() => setOpen(false)}
-              className="block px-4 py-2.5 text-sm font-medium text-zinc-800 transition-colors hover:bg-zinc-100 dark:text-zinc-100 dark:hover:bg-zinc-900"
+              style={{ transitionDelay: open ? `${index * 40 + 100}ms` : "0ms" }}
+              className={`border-b border-zinc-200 py-4 text-lg font-medium text-zinc-800 transition-[opacity,transform,color] duration-300 ease-out hover:text-zinc-500 motion-reduce:transition-none dark:border-zinc-800 dark:text-zinc-100 dark:hover:text-zinc-400 ${
+                open ? "translate-y-0 opacity-100" : "translate-y-2 opacity-0"
+              }`}
             >
               {link.label}
             </Link>
           ))}
+        </nav>
 
-          {isAuthenticated ? (
-            <div
-              className="mt-1 border-t border-zinc-200 px-4 pt-2 dark:border-zinc-800"
-              onClick={() => setOpen(false)}
-            >
-              <LogoutButton />
-            </div>
-          ) : null}
-        </div>
-      ) : null}
+        {isAuthenticated ? (
+          <div className="mt-auto pt-6" onClick={() => setOpen(false)}>
+            <LogoutButton />
+          </div>
+        ) : null}
+      </div>
     </div>
   );
 }

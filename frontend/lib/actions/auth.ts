@@ -47,7 +47,7 @@ async function postAuth(
 export async function loginAction(
   values: LoginValues,
   nextPath?: string,
-): Promise<AuthActionState> {
+): Promise<AuthActionState | undefined> {
   const parsed = loginSchema.safeParse(values);
   if (!parsed.success) {
     return {
@@ -62,7 +62,7 @@ export async function loginAction(
   redirect(safeRedirectTarget(nextPath) ?? homePathForRole(result.user.role));
 }
 
-export async function registerAction(values: RegisterValues): Promise<AuthActionState> {
+export async function registerAction(values: RegisterValues): Promise<AuthActionState | undefined> {
   const parsed = registerSchema.safeParse(values);
   if (!parsed.success) {
     return {

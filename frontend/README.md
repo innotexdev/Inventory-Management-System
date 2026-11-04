@@ -17,7 +17,7 @@ Next.js 16 + Tailwind CSS 4 + TypeScript.
   authenticated user.
 - Session user state is resolved via the backend `GET /api/auth/me` endpoint.
 
-## Profile and my inventory (Milestone 3)
+## Profile and my inventory Features
 
 - `/profile` (all roles) shows your email, role, team (`No team` when you are
   in none) and the date your account was created, all read-only.
@@ -42,19 +42,6 @@ Next.js 16 + Tailwind CSS 4 + TypeScript.
   `GET /api/users/me/assignments` (matched on `item.id` for the open
   assignment), because `GET /api/users/me/items` does not include the
   assignment timestamp.
-
-## API response shapes (backend quirks)
-
-- `GET /api/users/me/items` and `GET /api/users/me/assignments` return raw
-  JSON arrays. They are not wrapped in a `{ "data": ... }` envelope.
-- `PATCH /api/users/me` returns `{ "data": <user> }`.
-- `PATCH /api/users/me/password` returns the updated user object directly.
-- Every error response uses `{ "error": { "code", "message", "fields?" } }`;
-  `fields` is present only for validation errors and field-level conflicts.
-- Every protected page resolves the current user first via
-  `GET /api/auth/me`; an expired or deactivated session redirects to
-  `/login` before any data is fetched. A non-`401` failure while fetching
-  renders the nearest error boundary with a retry (`app/error.tsx`).
 
 ## Prerequisites
 

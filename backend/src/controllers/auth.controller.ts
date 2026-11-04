@@ -12,6 +12,7 @@ export async function login(
 ): Promise<void> {
   try {
     const user = await verifyCredentials(req.body);
+
     setSessionCookie(res, user.id);
     res.json({ data: user });
   } catch (err) {

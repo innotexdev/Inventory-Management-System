@@ -32,7 +32,8 @@ export async function changeUserPassword(
 ) {
   try {
     const user = (req as AuthenticatedRequest).user;
-    res.json(await changePassword(user.id, req.body));
+    const result = await changePassword(user.id, req.body);
+    res.json({ data: result });
   } catch (err) {
     next(err);
   }
@@ -41,7 +42,8 @@ export async function changeUserPassword(
 export async function getMyItems(req: Request, res: Response, next: NextFunction) {
   try {
     const user = (req as AuthenticatedRequest).user;
-    res.json(await listCurrentItemsForUser(user.id));
+    const result = await listCurrentItemsForUser(user.id);
+    res.json({ data: result });
   } catch (err) {
     next(err);
   }
@@ -50,7 +52,8 @@ export async function getMyItems(req: Request, res: Response, next: NextFunction
 export async function getMyAssignments(req: Request, res: Response, next: NextFunction) {
   try {
     const user = (req as AuthenticatedRequest).user;
-    res.json(await listAssignmentsForUser(user.id));
+    const result = await listAssignmentsForUser(user.id);
+    res.json({ data: result });
   } catch (err) {
     next(err);
   }

@@ -8,8 +8,9 @@ export interface ServerActionState {
 export function applyServerErrors<T extends FieldValues>(
   setError: UseFormSetError<T>,
   fields: readonly Path<T>[],
-  result: ServerActionState,
+  result?: ServerActionState | null,
 ): void {
+  if (!result) return;
   const matched = fields.filter((field) => result.fieldErrors?.[field] !== undefined);
   for (const field of matched) {
     setError(field, { message: result.fieldErrors?.[field] });
