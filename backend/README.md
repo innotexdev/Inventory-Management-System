@@ -6,6 +6,8 @@ Express + Prisma (PostgreSQL) REST API.
   migrations, seed script, README.
 - Milestone 2 = authentication flow: register, login, logout and me with
   JWT-backed httpOnly cookie sessions, Zod input validation and RBAC.
+- Milestone 3 = profile and My inventory: edit own name, change own password,
+  list own current items and own assignment history.
 
 ## Prerequisites
 
@@ -58,6 +60,7 @@ npm run dev
 
 API: `http://localhost:5000` — health: `http://localhost:5000/api/health`
 Auth API: `http://localhost:5000/api/auth` (register, login, logout, me)
+User API: `http://localhost:5000/api/users` (own profile, password, items, assignments)
 Swagger: `http://localhost:5000/api-docs`
 
 ## Authentication
@@ -76,6 +79,41 @@ Auth endpoints live under `/api/auth`:
 - CORS allows the configured frontend origin via `CLIENT_URL`.
 - Protected routes use the `requireAuth` middleware to verify the user's
   authentication.
+
+## Profile and My inventory
+
+Endpoints for the signed-in user live under `/api/users/me`. They are available
+to every role (Employee, Manager, Admin) and always act on the caller's own
+data: there is no user id in the path, so one user cannot read or change
+another user's data through these routes.
+
+| Method | Route                       | Auth | Description                                       |
+| ------ | --------------------------- | ---- | ------------------------------------------------- |
+| PATCH  | `/api/users/me`             | User | Update own first and last name                    |
+| PATCH  | `/api/users/me/password`    | User | Change own password (current + new password)      |
+| GET    | `/api/users/me/items`       | User | Items currently assigned to the caller            |
+| GET    | `/api/users/me/assignments` | User | The caller's assignment history (active and past) |
+
+Rules:
+
+- **Edit profile:** only `firstName` and `lastName` can be changed. Both are
+  trimmed and validated server-side (2 to 50 characters; letters, spaces,
+  hyphens and apostrophes). Email, role and team are read-only here, and any
+  other field in the request body is ignored or rejected, never saved.
+- **Change password:** requires the old password, which must be correct.
+  The new password must be 8 to 64 characters with at least one lowercase
+  letter, one uppercase letter and one digit, must match the confirmation, and
+  must differ from the current password. The new password is hashed with
+  Argon2.
+- **My items:** returns the items whose active assignment (`returnedAt` is
+  null) belongs to the caller. Each row includes asset tag, name, category,
+  serial number and the date it was assigned.
+- **My assignment history:** returns every assignment for the caller, with
+  assigned and returned dates. Past assignments stay visible even after the
+  item is retired.
+- **Managers and Admins** also hold equipment, and their own items appear in
+  these endpoints like anyone else's.
+- Responses never include `passwordHash` or any other internal field.
 
 ## Scripts
 

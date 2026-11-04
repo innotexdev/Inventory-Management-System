@@ -11,9 +11,11 @@ import { changePasswordSchema, updateUserSchema } from "../validation/user.valid
 
 const router = Router();
 
-router.patch("/me", requireAuth, validateBody(updateUserSchema), updateMyInfo);
-router.patch("/me/password", requireAuth, validateBody(changePasswordSchema), changeUserPassword);
-router.get("/me/items", requireAuth, getMyItems);
-router.get("/me/assignments", requireAuth, getMyAssignments);
+router.use(requireAuth);
+
+router.patch("/me", validateBody(updateUserSchema), updateMyInfo);
+router.patch("/me/password", validateBody(changePasswordSchema), changeUserPassword);
+router.get("/me/items", getMyItems);
+router.get("/me/assignments", getMyAssignments);
 
 export default router;
