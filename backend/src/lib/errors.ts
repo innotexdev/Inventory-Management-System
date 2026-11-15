@@ -30,6 +30,30 @@ export class NotFoundError extends HttpError {
   }
 }
 
+export class AuthenticationError extends HttpError {
+  constructor(message = "Authentication required") {
+    super(401, message, "UNAUTHORIZED");
+  }
+}
+
+export class ForbiddenError extends HttpError {
+  constructor(message = "You do not have permission to perform this action") {
+    super(403, message, "FORBIDDEN");
+  }
+}
+
+export class DuplicateEmailError extends HttpError {
+  constructor() {
+    super(409, "Email is already in use", "CONFLICT", { email: "Email is already in use" });
+  }
+}
+
+export class TooManyRequestsError extends HttpError {
+  constructor(message = "Request limit exceeded") {
+    super(429, message, "TOO_MANY_REQUESTS");
+  }
+}
+
 export type BodyParserErrorType = "entity.parse.failed" | "entity.too.large";
 
 const BODY_PARSER_ERRORS: Record<BodyParserErrorType, () => HttpError> = {
@@ -75,4 +99,8 @@ export function toHttpError(err: unknown): HttpError {
   }
 
   return new HttpError(500, "Internal server error");
+}
+
+export function isUniqueViolation(err: unknown): boolean {
+  return hasPrismaCode(err, "P2002");
 }

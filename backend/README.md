@@ -1,8 +1,11 @@
 # Inventory Backend
 
-Express + Prisma (PostgreSQL) skeleton. No auth, no business logic yet.
-Milestone 1 = repository setup, folder structure, database schema,
-migrations, seed script, README.
+Express + Prisma (PostgreSQL) REST API.
+
+- Milestone 1 = repository setup, folder structure, database schema,
+  migrations, seed script, README.
+- Milestone 2 = authentication flow: register, login, logout and me with
+  JWT-backed httpOnly cookie sessions, Zod input validation and RBAC.
 
 ## Prerequisites
 
@@ -13,6 +16,8 @@ migrations, seed script, README.
 
 ```bash
 cp .env.example .env   # Windows: copy .env.example .env
+
+
 npm install
 
 # Generate Prisma Client
@@ -26,12 +31,51 @@ npm run db:migrate
 
 # fill with seed data (idempotent: safe to run twice)
 npm run db:seed
+```
 
+### Generate JWT Secret
+
+Before starting the API, replace the `JWT_SECRET` placeholder in `backend/.env` with a securely generated secret.
+
+Using OpenSSL:
+
+```bash
+openssl rand -hex 32
+```
+
+If OpenSSL is unavailable (for example, on Windows), use Node.js:
+
+```bash
+node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+```
+
+Copy the generated value into `JWT_SECRET` in `backend/.env`.
+
+```bash
 # run the API
 npm run dev
 ```
 
 API: `http://localhost:5000` — health: `http://localhost:5000/api/health`
+Auth API: `http://localhost:5000/api/auth` (register, login, logout, me)
+Swagger: `http://localhost:5000/api-docs`
+
+## Authentication
+
+Auth endpoints live under `/api/auth`:
+
+| Method | Route                | Auth   | Description                                    |
+| ------ | -------------------- | ------ | ---------------------------------------------- |
+| POST   | `/api/auth/register` | Public | Create account (Zod-validated, Argon2 hashing) |
+| POST   | `/api/auth/login`    | Public | Verify credentials, set session cookie         |
+| POST   | `/api/auth/logout`   | User   | clear the session cookie                       |
+| GET    | `/api/auth/me`       | User   | Return current user and role                   |
+
+- Sessions use a stateless JWT stored in an httpOnly cookie, with a seven-day
+  expiration.
+- CORS allows the configured frontend origin via `CLIENT_URL`.
+- Protected routes use the `requireAuth` middleware to verify the user's
+  authentication.
 
 ## Scripts
 
@@ -51,6 +95,7 @@ API: `http://localhost:5000` — health: `http://localhost:5000/api/health`
 | `npm run lint`         | ESLint (zero warnings)                                              |
 | `npm run format`       | Prettier check (no changes written)                                 |
 | `npm run format:write` | Prettier write (auto-format all files)                              |
+| `npm run test`         | Unit tests (`node --import tsx/esm --test src/tests/**/*.test.ts`)  |
 
 `npm run build` compiles with `tsconfig.build.json`, which pins `rootDir` to `src`
 so the entry point is emitted at `dist/index.js` (matching `npm start`).
@@ -60,7 +105,8 @@ which live outside `src` and are run directly via `tsx`.
 ## Environment
 
 See `.env.example`. Variables: `PORT`, `DATABASE_URL`, `LOG_LEVEL`
-(`debug|info|warn|error|silent`)
+(`debug|info|warn|error|silent`), `JWT_SECRET`, `BASE_URL`, and `CLIENT_URL`
+(the CORS origin for the frontend).
 
 ## Database rules
 

@@ -31,6 +31,14 @@ function oneOf<T extends string>(name: string, allowed: readonly T[], defaultVal
   return match;
 }
 
+function secret(name: string, minLength: number): string {
+  const value = requiredString(name);
+  if (value.length < minLength) {
+    throw new Error(`Environment variable ${name} must be at least ${minLength} characters`);
+  }
+  return value;
+}
+
 function positiveInteger(name: string, defaultValue: number): number {
   const rawValue = process.env[name]?.trim();
 
@@ -52,6 +60,9 @@ const NODE_ENV = oneOf("NODE_ENV", NODE_ENVS, "development");
 export const env = {
   DATABASE_URL: requiredString("DATABASE_URL"),
   NODE_ENV,
+  JWT_SECRET: secret("JWT_SECRET", 32),
+  CLIENT_URL: requiredString("CLIENT_URL"),
+  BASE_URL: requiredString("BASE_URL"),
   LOG_LEVEL: oneOf("LOG_LEVEL", LOG_LEVELS, NODE_ENV === "production" ? "info" : "debug"),
   PORT: positiveInteger("PORT", 5000),
 } as const;
