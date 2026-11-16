@@ -1,4 +1,3 @@
-
 # Inventory — Monorepo
 
 Single repository for the Inventory Management mentee project.
@@ -11,6 +10,9 @@ repo/
 
 ## Milestones
 
+The project is built in six milestones, in order. Each milestone ends with a
+pull request, a demo and a review before the next one starts.
+
 - Milestone 1 — repository setup, database schema, migrations, seed script,
   tooling (ESLint, Prettier, TypeScript strict).
 - Milestone 2 — authentication: register, log in, log out, session in an
@@ -19,6 +21,18 @@ repo/
   edit name, change password) and `/my-inventory` (current assigned items
   with assigned dates, assignment history, empty states). Navigation shows
   role-appropriate links for every signed-in user.
+- Milestone 4 — inventory: item list with search, filters, sort and pagination
+  in the URL, create and edit item, item detail with current holder and full
+  history, repair/back-from-repair/retire status changes, categories and
+  dashboard totals. Restricted to Manager and Admin on the server; retire is
+  Admin-only. The backend API is implemented; the inventory screens are the
+  remaining work in this milestone.
+
+Milestones 1–3 are implemented in both apps. Milestone 4 is currently
+implemented in the backend.
+
+See `backend/README.md` for the API surface and `frontend/README.md` for the
+pages built so far.
 
 ## Prerequisites
 
@@ -72,6 +86,7 @@ npm run dev
 ```
 
 API health: [http://localhost:5000/api/health](http://localhost:5000/api/health)
+Swagger docs: [http://localhost:5000/api-docs](http://localhost:5000/api-docs)
 
 ### Frontend
 

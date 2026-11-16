@@ -8,6 +8,10 @@ Express + Prisma (PostgreSQL) REST API.
   JWT-backed httpOnly cookie sessions, Zod input validation and RBAC.
 - Milestone 3 = profile and My inventory: edit own name, change own password,
   list own current items and own assignment history.
+- Milestone 4 = inventory for Manager and Admin: category list, item list with
+  search/filters/sort/pagination, create and edit item, item detail with
+  current holder and history, repair/back-from-repair/retire status changes,
+  and dashboard totals.
 
 ## Prerequisites
 
@@ -61,6 +65,7 @@ npm run dev
 API: `http://localhost:5000` — health: `http://localhost:5000/api/health`
 Auth API: `http://localhost:5000/api/auth` (register, login, logout, me)
 User API: `http://localhost:5000/api/users` (own profile, password, items, assignments)
+Inventory API: `http://localhost:5000/api/items`, `/api/categories`, `/api/stats/inventory`
 Swagger: `http://localhost:5000/api-docs`
 
 ## Authentication
@@ -71,7 +76,7 @@ Auth endpoints live under `/api/auth`:
 | ------ | -------------------- | ------ | ---------------------------------------------- |
 | POST   | `/api/auth/register` | Public | Create account (Zod-validated, Argon2 hashing) |
 | POST   | `/api/auth/login`    | Public | Verify credentials, set session cookie         |
-| POST   | `/api/auth/logout`   | User   | clear the session cookie                       |
+| POST   | `/api/auth/logout`   | User   | Clear the session cookie                       |
 | GET    | `/api/auth/me`       | User   | Return current user and role                   |
 
 - Sessions use a stateless JWT stored in an httpOnly cookie, with a seven-day
@@ -115,6 +120,140 @@ Rules:
   these endpoints like anyone else's.
 - Responses never include `passwordHash` or any other internal field.
 
+## Inventory (Milestone 4)
+
+All inventory endpoints require a signed-in **Manager or Admin**. An Employee
+gets `403`, and a request without a session gets `401`. Retiring an item is
+**Admin-only**; a Manager attempting it gets `403`. The role is read from the
+database on every request, so a demotion or deactivation takes effect on the
+next call.
+
+| Method | Route                        | Auth           | Description                                      |
+| ------ | ---------------------------- | -------------- | ------------------------------------------------ |
+| GET    | `/api/categories`            | Manager, Admin | Read-only categories from the seed               |
+| GET    | `/api/items`                 | Manager, Admin | Paginated item list with filters and sorting     |
+| POST   | `/api/items`                 | Manager, Admin | Create item (server-generated asset tag)         |
+| GET    | `/api/items/:id`             | Manager, Admin | Item detail with current holder                  |
+| PATCH  | `/api/items/:id`             | Manager, Admin | Edit item fields                                 |
+| POST   | `/api/items/:id/status`      | Manager, Admin | Repair, back from repair, retire (retire: Admin) |
+| GET    | `/api/items/:id/assignments` | Manager, Admin | Full assignment history, newest first            |
+| GET    | `/api/stats/inventory`       | Manager, Admin | Dashboard totals per status and category         |
+
+### Item list query
+
+`GET /api/items` accepts `search`, `status`, `categoryId`, `teamId`,
+`holderId`, `sort`, `order`, `page` and `pageSize`.
+
+- `search` matches name, asset tag and serial number, case-insensitively.
+- `teamId` and `holderId` filter by the team/user of the **current holder**
+  (the user on the active assignment), because items do not belong to teams
+  directly.
+- `sort` is `name`, `assetTag` or `createdAt`; `order` is `asc` or `desc`.
+  Defaults: `name` ascending.
+- `page` defaults to `1` and `pageSize` to `20`; `pageSize` is capped at `100`.
+  Invalid values fall back to the defaults. A page past the last one returns
+  an empty `data` array with correct `meta`, not an error.
+- Retired items are hidden unless the status filter explicitly asks for them.
+
+### Item status
+
+The database enum holds `AVAILABLE`, `IN_REPAIR` and `RETIRED`. The API also
+reports `ASSIGNED`, derived from the presence of an active assignment
+(`returnedAt` is null). An item is never stored with a second copy of its
+holder or assigned status. The seeded data therefore reports:
+
+| Status    | Count |
+| --------- | ----- |
+| AVAILABLE | 11    |
+| ASSIGNED  | 24    |
+| IN_REPAIR | 3     |
+| RETIRED   | 2     |
+
+`GET /api/items?status=AVAILABLE` is the "Unassigned" view: it returns only
+items with no active assignment. `status=ASSIGNED` returns items with an
+active assignment. Retired items appear only with `status=RETIRED`.
+
+### Status transitions
+
+`POST /api/items/:id/status` takes `{ "status": "<target>" }`. Allowed targets
+are `AVAILABLE`, `IN_REPAIR` and `RETIRED`; assigning is a separate milestone.
+Assignment is derived, not a target here.
+
+| From      | To        | Who            |
+| --------- | --------- | -------------- |
+| AVAILABLE | IN_REPAIR | Manager, Admin |
+| IN_REPAIR | AVAILABLE | Manager, Admin |
+| AVAILABLE | RETIRED   | Admin          |
+| IN_REPAIR | RETIRED   | Admin          |
+
+Every other transition returns `409`, including any transition from an
+`ASSIGNED` item (it must be unassigned first) and any transition from
+`RETIRED`, which is final. `PATCH /api/items/:id` cannot change status or
+asset tag; those fields are ignored in the request body.
+
+### Create and edit validation
+
+- Name: required, 2 to 100 characters.
+- Category: required, must exist (a missing category is a `400` with
+  `fields.categoryId`).
+- Brand and model: optional, at most 50 characters each.
+- Serial number: optional, 3 to 64 characters (letters, digits and hyphens),
+  unique case-insensitively. A duplicate returns `409` with
+  `fields.serialNumber`.
+- Purchase date: optional, valid date, not in the future.
+- Notes: optional, at most 500 characters.
+- Text is trimmed; whitespace-only optional values become `null`. Unknown
+  fields are ignored, never saved, and ids in the URL must be UUIDs (a
+  malformed id returns `400`).
+
+### Response shapes
+
+Errors always use `{ "error": { "code", "message", "fields"? } }`; `fields`
+appears only for validation errors and field-level conflicts. Lists use
+`{ "data": [], "meta": { "page", "pageSize", "total", "totalPages" } }`.
+Single resources are wrapped in `{ "data": ... }`. Status codes follow the
+project scope: `200`/`201`/`204` success, `400` validation or malformed input,
+`401` no session, `403` wrong role, `404` missing resource, `409` conflict,
+`500` unexpected error (without a stack trace or SQL in the response).
+
+### Where the code lives
+
+The milestone follows the existing layering rather than introducing a new
+structure:
+
+- `src/validation/inventory.validation.ts` — shared Zod schemas for bodies and
+  the list query.
+- `src/lib/item-status.ts` and `src/lib/inventory-errors.ts` — derived status,
+  transition rules and conflict errors.
+- `src/middleware/validate-uuid-param.ts` — UUID path validation.
+- `src/services/inventory.service.ts` — Prisma queries, mapping and rules.
+- `src/controllers/inventory.controller.ts` and `src/routes/inventory.ts` —
+  handlers and the three routers mounted in `src/app.ts`.
+- `src/docs/inventory.docs.ts` — Swagger fragment registered in
+  `src/lib/swagger.ts`.
+- `src/types/inventory.ts` — shared response types.
+- `src/tests/inventory/` — validation, status-rule and route tests.
+
+## Key decisions
+
+- **Backend:** Express 5 with Prisma 7 and the `@prisma/adapter-pg` adapter,
+  exposing REST JSON under `/api`. Zod schemas are defined once and reused for
+  request validation and Swagger generation. Code is organised by layer
+  (`validation`, `middleware`, `services`, `controllers`, `routes`, `docs`,
+  `tests`) with shared response types in `src/types`.
+- **Auth:** a stateless JWT is stored in an `httpOnly`, `SameSite=Lax` cookie
+  (Secure in production) with a seven-day lifetime. Passwords are hashed with
+  Argon2 and hashes never leave the server. `requireAuth` re-reads the user
+  from the database on every request, so a changed role, team or active flag
+  takes effect immediately; `authorize(minRole)` reuses one rank-based helper
+  for all role checks.
+- **One active assignment:** guaranteed by the database, not only by
+  application code. Migration `0001_items_and_assignments` adds the partial
+  unique index `assignments_one_active_per_item` on `itemId` where
+  `returnedAt IS NULL`. Item status is derived from that active assignment
+  instead of storing a second copy on the item. Assignment and unassignment
+  endpoints are implemented in Milestone 5 on top of the same guarantee.
+
 ## Scripts
 
 | Command                | What it does                                                        |
@@ -133,7 +272,7 @@ Rules:
 | `npm run lint`         | ESLint (zero warnings)                                              |
 | `npm run format`       | Prettier check (no changes written)                                 |
 | `npm run format:write` | Prettier write (auto-format all files)                              |
-| `npm run test`         | Unit tests (`node --import tsx/esm --test src/tests/**/*.test.ts`)  |
+| `npm run test`         | Tests (`tsx --test --test-reporter=spec "src/tests/**/*.test.ts"`)  |
 
 `npm run build` compiles with `tsconfig.build.json`, which pins `rootDir` to `src`
 so the entry point is emitted at `dist/index.js` (matching `npm start`).
@@ -144,7 +283,8 @@ which live outside `src` and are run directly via `tsx`.
 
 See `.env.example`. Variables: `PORT`, `DATABASE_URL`, `LOG_LEVEL`
 (`debug|info|warn|error|silent`), `JWT_SECRET`, `BASE_URL`, and `CLIENT_URL`
-(the CORS origin for the frontend).
+(the CORS origin for the frontend). The backend listens on port `5000` and the
+frontend reaches it through `NEXT_PUBLIC_API_URL` in `frontend/.env.local`.
 
 ## Database rules
 

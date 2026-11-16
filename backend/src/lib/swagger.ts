@@ -4,8 +4,9 @@ import { authDocs } from "../docs/auth.docs";
 import { healthDocs } from "../docs/health.docs";
 import { env } from "../config/env";
 import { userDocs } from "../docs/user.docs";
+import { inventoryDocs } from "../docs/inventory.docs";
 
-const fragments: OpenApiFragment[] = [healthDocs, authDocs, userDocs];
+const fragments: OpenApiFragment[] = [healthDocs, authDocs, userDocs, inventoryDocs];
 
 const paths: Record<string, unknown> = {};
 for (const f of fragments) Object.assign(paths, f.paths);

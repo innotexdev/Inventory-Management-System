@@ -9,6 +9,10 @@ Next.js 16 + Tailwind CSS 4 + TypeScript.
 - Milestone 3 = profile and my inventory: a `/profile` page to view account
   details, edit your name and change your password, and a `/my-inventory`
   page listing your currently assigned items and your assignment history.
+- Milestone 4 = inventory. The backend API for items, categories, status
+  changes and dashboard totals is implemented; the `/inventory`,
+  `/inventory/new`, `/inventory/[id]` and dashboard screens are the remaining
+  work in this milestone.
 
 ## Auth features
 
@@ -42,6 +46,28 @@ Next.js 16 + Tailwind CSS 4 + TypeScript.
   `GET /api/users/me/assignments` (matched on `item.id` for the open
   assignment), because `GET /api/users/me/items` does not include the
   assignment timestamp.
+
+## Inventory API (Milestone 4 backend)
+
+The backend now exposes the inventory endpoints for Manager and Admin. The
+frontend will consume them from the inventory screens:
+
+| Method | Route                        | Purpose                                        |
+| ------ | ---------------------------- | ---------------------------------------------- |
+| GET    | `/api/categories`            | Category picker for create/edit                |
+| GET    | `/api/items`                 | List with search, filters, sort and pagination |
+| POST   | `/api/items`                 | Create item                                    |
+| GET    | `/api/items/:id`             | Item detail and current holder                 |
+| PATCH  | `/api/items/:id`             | Edit item fields                               |
+| POST   | `/api/items/:id/status`      | Repair, back from repair, retire               |
+| GET    | `/api/items/:id/assignments` | Item history                                   |
+| GET    | `/api/stats/inventory`       | Dashboard totals                               |
+
+Search, filters, sort and page are kept in the URL so refresh and shared links
+reproduce the same result. Lists return `{ data, meta }` with
+`page`, `pageSize`, `total` and `totalPages`. The API reports `ASSIGNED` as a
+derived status whenever an item has an active assignment, which matches the
+`ItemStatus` type already defined in `lib/api.ts`.
 
 ## Prerequisites
 
