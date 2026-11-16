@@ -1,13 +1,13 @@
 "use client";
 
-import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import type { NavLink } from "@/lib/navigation";
+import type { NavLinkType } from "@/lib/navigation";
 import { LogoutButton } from "./logout-button";
+import { NavLink } from "./nav-link";
 
 interface MobileNavProps {
-  links: NavLink[];
+  links: NavLinkType[];
   isAuthenticated: boolean;
 }
 
@@ -92,7 +92,7 @@ export function MobileNav({ links, isAuthenticated }: MobileNavProps) {
       >
         <nav className="flex flex-col">
           {links.map((link, index) => (
-            <Link
+            <NavLink
               key={link.href}
               href={link.href}
               onClick={() => setOpen(false)}
@@ -100,9 +100,10 @@ export function MobileNav({ links, isAuthenticated }: MobileNavProps) {
               className={`border-b border-zinc-200 py-4 text-lg font-medium text-zinc-800 transition-[opacity,transform,color] duration-300 ease-out hover:text-zinc-500 motion-reduce:transition-none dark:border-zinc-800 dark:text-zinc-100 dark:hover:text-zinc-400 ${
                 open ? "translate-y-0 opacity-100" : "translate-y-2 opacity-0"
               }`}
+              activeClassName="!text-zinc-950 dark:!text-white font-semibold"
             >
               {link.label}
-            </Link>
+            </NavLink>
           ))}
         </nav>
 

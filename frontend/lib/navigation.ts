@@ -1,7 +1,7 @@
 import type { Role } from "./api";
 import { hasMinRole } from "./auth";
 
-export interface NavLink {
+export interface NavLinkType {
   href: string;
   label: string;
 }
@@ -13,7 +13,7 @@ export function homePathForRole(role?: Role | null): string {
   return "/my-inventory";
 }
 
-export function linksForRole(role: Role | null): NavLink[] {
+export function linksForRole(role: Role | null): NavLinkType[] {
   if (!role) {
     return [
       { href: "/login", label: "Log in" },
