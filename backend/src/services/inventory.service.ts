@@ -1,8 +1,13 @@
 import { prisma } from "../lib/prisma";
 import type { Prisma } from "../generated/client";
 import { ItemStatus, Role } from "../generated/enums";
-import { isRecordNotFound, isUniqueViolation, NotFoundError, ValidationError } from "../lib/errors";
-import { DuplicateSerialNumberError } from "../lib/inventory-errors";
+import {
+  isRecordNotFound,
+  isUniqueViolation,
+  NotFoundError,
+  ValidationError,
+  DuplicateSerialNumberError,
+} from "../lib/errors";
 import { assertStatusTransition, effectiveStatus, type ItemStatusView } from "../lib/item-status";
 import type {
   ChangeItemStatusInput,

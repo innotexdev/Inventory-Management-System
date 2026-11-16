@@ -54,6 +54,20 @@ export class TooManyRequestsError extends HttpError {
   }
 }
 
+export class DuplicateSerialNumberError extends HttpError {
+  constructor() {
+    super(409, "Serial number is already in use", "CONFLICT", {
+      serialNumber: "Serial number is already in use",
+    });
+  }
+}
+
+export class ItemConflictError extends HttpError {
+  constructor(message: string) {
+    super(409, message, "CONFLICT");
+  }
+}
+
 export type BodyParserErrorType = "entity.parse.failed" | "entity.too.large";
 
 const BODY_PARSER_ERRORS: Record<BodyParserErrorType, () => HttpError> = {

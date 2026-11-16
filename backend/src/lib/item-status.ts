@@ -1,6 +1,5 @@
-import { ForbiddenError } from "./errors";
+import { ForbiddenError, ItemConflictError } from "./errors";
 import { ItemStatus, Role } from "../generated/enums";
-import { ItemConflictError } from "./inventory-errors";
 
 export type ItemStatusView = ItemStatus | "ASSIGNED";
 

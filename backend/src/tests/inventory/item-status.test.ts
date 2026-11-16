@@ -1,7 +1,6 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
-import { ForbiddenError } from "../../lib/errors";
-import { ItemConflictError } from "../../lib/inventory-errors";
+import { ForbiddenError, ItemConflictError } from "../../lib/errors";
 import { assertStatusTransition, effectiveStatus } from "../../lib/item-status";
 import { ItemStatus, Role } from "../../generated/enums";
 import type { ItemStatusView } from "../../lib/item-status";
