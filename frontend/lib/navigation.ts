@@ -23,6 +23,7 @@ export function linksForRole(role: Role | null): NavLinkType[] {
   if (hasMinRole(role, "MANAGER")) {
     return [
       { href: "/my-inventory", label: "My inventory" },
+      { href: "/inventory", label: "Inventory" },
       { href: "/dashboard", label: "Dashboard" },
       { href: "/profile", label: "Profile" },
     ];

@@ -25,11 +25,12 @@ pull request, a demo and a review before the next one starts.
   in the URL, create and edit item, item detail with current holder and full
   history, repair/back-from-repair/retire status changes, categories and
   dashboard totals. Restricted to Manager and Admin on the server; retire is
-  Admin-only. The backend API is implemented; the inventory screens are the
-  remaining work in this milestone.
+  Admin-only. The backend API and the frontend screens for the inventory list,
+  create, edit, item detail and dashboard totals are implemented. Assign and
+  unassign await their backend endpoints (Milestone 5).
 
-Milestones 1–3 are implemented in both apps. Milestone 4 is currently
-implemented in the backend.
+Milestones 1–3 are implemented in both apps. Milestone 4 is implemented in the
+backend and in the frontend for every API operation the backend exposes.
 
 See `backend/README.md` for the API surface and `frontend/README.md` for the
 pages built so far.

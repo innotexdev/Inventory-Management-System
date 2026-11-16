@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { env } from "@/config";
+import { Footer } from "@/components/footer";
 
 const FEATURES = [
   {
@@ -211,19 +211,7 @@ export default function Home() {
         </section>
       </main>
 
-      <footer className="border-t border-zinc-200 dark:border-zinc-800">
-        <div className="mx-auto flex w-full max-w-6xl flex-col gap-3 px-6 py-6 text-sm text-zinc-500 sm:flex-row sm:items-center sm:justify-between dark:text-zinc-400">
-          <p>Inventory Management</p>
-          {process.env.NODE_ENV !== "production" && (
-            <p className="font-mono text-xs">
-              API health:{" "}
-              <span className="text-zinc-950 dark:text-zinc-50">
-                {env.NEXT_PUBLIC_API_URL}/api/health
-              </span>
-            </p>
-          )}
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }

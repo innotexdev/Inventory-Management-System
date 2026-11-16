@@ -21,6 +21,64 @@ export interface ItemCategory {
   name: string;
 }
 
+export interface CategoryView extends ItemCategory {
+  description: string | null;
+}
+
+export interface ItemHolder extends AssignmentPerson {
+  team: { id: string; name: string } | null;
+}
+
+export interface InventoryItem {
+  id: string;
+  assetTag: string;
+  name: string;
+  category: CategoryView;
+  brand: string | null;
+  model: string | null;
+  serialNumber: string | null;
+  status: ItemStatus;
+  purchaseDate: string | null;
+  notes: string | null;
+  createdAt: string;
+  updatedAt: string;
+  currentHolder: ItemHolder | null;
+}
+
+export interface ItemAssignment {
+  id: string;
+  assignedAt: string;
+  returnedAt: string | null;
+  note: string | null;
+  item: { id: string; assetTag: string; name: string };
+  assignedBy: AssignmentPerson;
+  returnedBy: AssignmentPerson | null;
+}
+
+export interface PageMeta {
+  page: number;
+  pageSize: number;
+  total: number;
+  totalPages: number;
+}
+
+export interface ListResponse<T> {
+  data: T[];
+  meta: PageMeta;
+}
+
+export interface CategoryStats extends ItemCategory {
+  total: number;
+  assigned: number;
+  available: number;
+}
+
+export interface InventoryStats {
+  total: number;
+  byStatus: Record<ItemStatus, number>;
+  byCategory: CategoryStats[];
+}
+
 export interface HeldItem {
   id: string;
   assetTag: string;

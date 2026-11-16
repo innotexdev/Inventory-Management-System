@@ -9,10 +9,10 @@ Next.js 16 + Tailwind CSS 4 + TypeScript.
 - Milestone 3 = profile and my inventory: a `/profile` page to view account
   details, edit your name and change your password, and a `/my-inventory`
   page listing your currently assigned items and your assignment history.
-- Milestone 4 = inventory. The backend API for items, categories, status
-  changes and dashboard totals is implemented; the `/inventory`,
-  `/inventory/new`, `/inventory/[id]` and dashboard screens are the remaining
-  work in this milestone.
+- Milestone 4 = inventory. Every inventory screen exposed by the backend API is
+  built: `/inventory` (list), `/inventory/new` (create), `/inventory/[id]`
+  (detail, history and status changes), `/inventory/[id]/edit` and `/dashboard`
+  (totals). Assign and unassign need endpoints that are not in the API yet.
 
 ## Auth features
 
@@ -68,6 +68,44 @@ reproduce the same result. Lists return `{ data, meta }` with
 `page`, `pageSize`, `total` and `totalPages`. The API reports `ASSIGNED` as a
 derived status whenever an item has an active assignment, which matches the
 `ItemStatus` type already defined in `lib/api.ts`.
+
+## Inventory list (Milestone 4 frontend)
+
+- `/inventory` is restricted to Manager and Admin by `requireRole` on the
+  server; an Employee receives the 403 page and direct API calls are rejected.
+- The list is paginated on the server (20 rows per page by default). Search,
+  status, category, sort field, sort order and page live in the URL; the
+  reusable `DataTable` renders the page it is given and reports the server
+  `meta` to screen readers.
+- "Unassigned" is a one-click view of Available items. Retired items are hidden
+  unless the Status filter requests them.
+- `teamId` and `holderId` filters are accepted from the URL for shared links;
+  pickers for them arrive with the users and teams screens.
+- The table uses `scope="col"`, `aria-sort`, labelled controls, keyboard
+  navigation, visible focus and a live results count. A loading skeleton,
+  empty state and the shared error boundary with retry cover the async states.
+
+## Inventory create, edit, detail and dashboard
+
+- `/inventory/new` and `/inventory/[id]/edit` share one React Hook Form form
+  and `itemSchema`. The same schema is re-run in a Server Action before the
+  request, so client and server validation cannot drift. Duplicate serial
+  numbers come back as a field error from the API.
+- `/inventory/[id]` shows every item field, the current holder and the full
+  assignment history (newest first, searchable and paginated in the table).
+  Malformed or unknown ids show the 404 page.
+- Status actions follow the backend rules exactly: Available → In repair,
+  In repair → Available, and either → Retired for Admin only. Hidden actions
+  are still rejected by the API. Retire asks for confirmation in a native
+  dialog that traps focus and restores it on close. A conflict is shown inline
+  and refreshes the item.
+- `/dashboard` (Manager and Admin) renders totals per status and a per-category
+  breakdown from `GET /api/stats/inventory`. Every number links to the filtered
+  inventory list.
+- Assign and Unassign are intentionally absent: the backend has no
+  `/api/items/:id/assign` or `/unassign` endpoint yet. The item history also
+  cannot show the holder because `GET /api/items/:id/assignments` does not
+  return the holder user.
 
 ## Prerequisites
 

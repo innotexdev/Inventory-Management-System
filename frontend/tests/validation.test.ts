@@ -6,6 +6,8 @@ import {
   loginSchema,
   updateProfileSchema,
   changePasswordSchema,
+  itemSchema,
+  itemStatusSchema,
 } from "../lib/validation";
 import { isSafeNextPath } from "../lib/safe-path";
 
@@ -363,5 +365,72 @@ describe("changePasswordSchema", () => {
       confirmPassword: "Secret1234",
     });
     assert.ok("newPassword" in errs);
+  });
+});
+
+const validItem = {
+  name: "MacBook Pro 14",
+  categoryId: "5a9d1c40-0a0e-4f0b-8b1a-2c3d4e5f6a7b",
+  brand: "Apple",
+  model: "M3",
+  serialNumber: "C02-XK81QJG5H",
+  purchaseDate: "2025-04-12",
+  notes: "Frontend laptop",
+};
+
+describe("itemSchema", () => {
+  it("accepts a complete item", () => {
+    assert.ok(itemSchema.safeParse(validItem).success);
+  });
+
+  it("accepts an item with only the required fields", () => {
+    const result = itemSchema.safeParse({ name: "Monitor", categoryId: validItem.categoryId });
+    assert.ok(result.success);
+    assert.equal(result.data?.brand, undefined);
+    assert.equal(result.data?.serialNumber, undefined);
+  });
+
+  it("rejects a short or blank name", () => {
+    assert.ok("name" in fieldErrors(itemSchema, { ...validItem, name: "X" }));
+    assert.ok("name" in fieldErrors(itemSchema, { ...validItem, name: "   " }));
+  });
+
+  it("rejects a name longer than 100 characters", () => {
+    const errs = fieldErrors(itemSchema, { ...validItem, name: "a".repeat(101) });
+    assert.ok("name" in errs);
+  });
+
+  it("requires a valid category id", () => {
+    assert.ok("categoryId" in fieldErrors(itemSchema, { ...validItem, categoryId: "nope" }));
+  });
+
+  it("rejects an invalid serial number", () => {
+    assert.ok("serialNumber" in fieldErrors(itemSchema, { ...validItem, serialNumber: "ab" }));
+    assert.ok(
+      "serialNumber" in fieldErrors(itemSchema, { ...validItem, serialNumber: "has spaces" }),
+    );
+  });
+
+  it("rejects a purchase date in the future", () => {
+    const errs = fieldErrors(itemSchema, { ...validItem, purchaseDate: "2999-01-01" });
+    assert.ok("purchaseDate" in errs);
+  });
+
+  it("rejects notes longer than 500 characters", () => {
+    const errs = fieldErrors(itemSchema, { ...validItem, notes: "a".repeat(501) });
+    assert.ok("notes" in errs);
+  });
+});
+
+describe("itemStatusSchema", () => {
+  it("accepts the API status values", () => {
+    for (const value of ["AVAILABLE", "IN_REPAIR", "RETIRED"]) {
+      assert.ok(itemStatusSchema.safeParse(value).success);
+    }
+  });
+
+  it("rejects ASSIGNED and unknown values", () => {
+    assert.equal(itemStatusSchema.safeParse("ASSIGNED").success, false);
+    assert.equal(itemStatusSchema.safeParse("UNKNOWN").success, false);
   });
 });
