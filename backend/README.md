@@ -12,6 +12,9 @@ Express + Prisma (PostgreSQL) REST API.
   search/filters/sort/pagination, create and edit item, item detail with
   current holder and history, repair/back-from-repair/retire status changes,
   and dashboard totals.
+- Milestone 5 = assignments: assign and unassign items, users list/detail with
+  current items and history, a read-only teams list for filtering, and API
+  integration tests for every row of the assign/unassign rules table.
 
 ## Prerequisites
 
@@ -64,8 +67,9 @@ npm run dev
 
 API: `http://localhost:5000` — health: `http://localhost:5000/api/health`
 Auth API: `http://localhost:5000/api/auth` (register, login, logout, me)
-User API: `http://localhost:5000/api/users` (own profile, password, items, assignments)
+User API: `http://localhost:5000/api/users` (own profile, all users, detail, items, assignments)
 Inventory API: `http://localhost:5000/api/items`, `/api/categories`, `/api/stats/inventory`
+Teams API: `http://localhost:5000/api/teams` (read-only list for filters)
 Swagger: `http://localhost:5000/api-docs`
 
 ## Authentication
@@ -176,8 +180,9 @@ active assignment. Retired items appear only with `status=RETIRED`.
 ### Status transitions
 
 `POST /api/items/:id/status` takes `{ "status": "<target>" }`. Allowed targets
-are `AVAILABLE`, `IN_REPAIR` and `RETIRED`; assigning is a separate milestone.
-Assignment is derived, not a target here.
+are `AVAILABLE`, `IN_REPAIR` and `RETIRED`. Assigning is a separate endpoint
+(`POST /api/items/:id/assign`) because the status is derived from the presence
+of an active assignment and is never set directly.
 
 | From      | To        | Who            |
 | --------- | --------- | -------------- |
@@ -233,6 +238,70 @@ structure:
   `src/lib/swagger.ts`.
 - `src/types/inventory.ts` — shared response types.
 - `src/tests/inventory/` — validation, status-rule and route tests.
+- `src/validation/assignment.validation.ts` and `src/validation/user.validation.ts`
+  — assign/unassign bodies, note rules and the users list query.
+- `src/services/user.service.ts` and `src/services/team.service.ts` — user
+  list/detail queries and the read-only teams list.
+- `src/services/inventory.service.ts` — `assignItem` and `unassignItem`
+  transactions alongside the existing item operations.
+- `src/routes/user.ts`, `src/routes/team.ts` and `src/docs/*.docs.ts` — the new
+  Manager-gated routes and their OpenAPI fragments.
+- `src/tests/assignment/` and `src/tests/users/user.list.test.ts` — assignment
+  rules and users list integration tests.
+
+## Assignments and users (Milestone 5)
+
+All endpoints in this section require a signed-in **Manager or Admin**; an
+Employee gets `403` and a request without a session gets `401`.
+
+| Method | Route                        | Auth           | Description                                    |
+| ------ | ---------------------------- | -------------- | ---------------------------------------------- |
+| GET    | `/api/users`                 | Manager, Admin | List users with search, filters and pagination |
+| GET    | `/api/users/:id`             | Manager, Admin | User detail with team and held item count      |
+| GET    | `/api/users/:id/items`       | Manager, Admin | Items currently held by that user              |
+| GET    | `/api/users/:id/assignments` | Manager, Admin | That user's full assignment history            |
+| GET    | `/api/teams`                 | Manager, Admin | Read-only team list used by the users filter   |
+| POST   | `/api/items/:id/assign`      | Manager, Admin | Assign an available item to an active user     |
+| POST   | `/api/items/:id/unassign`    | Manager, Admin | Return an assigned item                        |
+
+### Assign and unassign rules
+
+`POST /api/items/:id/assign` takes `{ "userId": "<uuid>", "note"?: "<text>" }`.
+`POST /api/items/:id/unassign` takes `{ "note"?: "<text>" }`; an empty body is
+fine. Both return the updated item with its current holder and create or close
+the assignment row in one transaction.
+
+| Situation                                 | Result                      |
+| ----------------------------------------- | --------------------------- |
+| Item is not Available                     | 409 "Item is not available" |
+| Target user is deactivated                | 409 "User is not active"    |
+| Target user or item does not exist        | 404                         |
+| Item has no active assignment on unassign | 409 "Item is not assigned"  |
+| Two requests assign the same item at once | one `200`, one `409`        |
+| The same request is sent twice            | one assignment              |
+| Caller is an Employee                     | 403                         |
+
+A Manager may assign an item to themselves. The optional note is at most 250
+characters and is trimmed; a return note replaces the stored note only when one
+is provided. Every assignment stays in history with assigned and returned
+dates, who performed each action, and the note. Malformed ids return `400`.
+
+### Users list
+
+`GET /api/users` accepts `search`, `teamId`, `role`, `isActive`, `page` and
+`pageSize`. Search matches first name, last name and email case-insensitively.
+`isActive` accepts `true`/`false` strings; invalid values fall back to the
+defaults. Each row includes `heldItemsCount`, the number of items the user
+currently holds. `passwordHash` is never returned.
+
+### Tests
+
+`src/tests/assignment/` covers both validation schemas and every row of the
+assign/unassign rules table through the HTTP API. The concurrency and
+double-click tests create their own items and users and clean them up, proving
+that the database constraint produces exactly one active assignment.
+`src/tests/users/user.list.test.ts` covers the users list and detail endpoints
+and their role enforcement.
 
 ## Key decisions
 
@@ -251,8 +320,11 @@ structure:
   application code. Migration `0001_items_and_assignments` adds the partial
   unique index `assignments_one_active_per_item` on `itemId` where
   `returnedAt IS NULL`. Item status is derived from that active assignment
-  instead of storing a second copy on the item. Assignment and unassignment
-  endpoints are implemented in Milestone 5 on top of the same guarantee.
+  instead of storing a second copy on the item. `assignItem` checks availability
+  and inserts the assignment in one transaction; a racing insert fails on the
+  unique index and is translated to `409 "Item is not available"`. `unassignItem`
+  closes the row with a conditional `updateMany` on `returnedAt IS NULL`, so a
+  second concurrent return gets `409 "Item is not assigned"`.
 
 ## Scripts
 

@@ -139,5 +139,89 @@ export const userDocs: OpenApiFragment = {
         },
       },
     },
+
+    "/api/users": {
+      get: {
+        tags: ["Users"],
+        summary: "List users with search, filters and pagination",
+        description:
+          "Manager and Admin only. Each row includes the number of items the user holds.",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { name: "search", in: "query", schema: { type: "string" } },
+          { name: "teamId", in: "query", schema: { type: "string", format: "uuid" } },
+          {
+            name: "role",
+            in: "query",
+            schema: { type: "string", enum: ["EMPLOYEE", "MANAGER", "ADMIN"] },
+          },
+          { name: "isActive", in: "query", schema: { type: "boolean" } },
+          { name: "page", in: "query", schema: { type: "integer", minimum: 1 } },
+          { name: "pageSize", in: "query", schema: { type: "integer", minimum: 1, maximum: 100 } },
+        ],
+        responses: {
+          200: { description: "Paginated user list" },
+          401: { description: "No session" },
+          403: { description: "Role not allowed" },
+        },
+      },
+    },
+
+    "/api/users/{id}": {
+      get: {
+        tags: ["Users"],
+        summary: "User detail",
+        description: "Manager and Admin only.",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { name: "id", in: "path", required: true, schema: { type: "string", format: "uuid" } },
+        ],
+        responses: {
+          200: { description: "User detail" },
+          400: { description: "Malformed id" },
+          401: { description: "No session" },
+          403: { description: "Role not allowed" },
+          404: { description: "User not found" },
+        },
+      },
+    },
+
+    "/api/users/{id}/items": {
+      get: {
+        tags: ["Assignments"],
+        summary: "Items currently held by a user",
+        description: "Manager and Admin only.",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { name: "id", in: "path", required: true, schema: { type: "string", format: "uuid" } },
+        ],
+        responses: {
+          200: { description: "Currently held items" },
+          400: { description: "Malformed id" },
+          401: { description: "No session" },
+          403: { description: "Role not allowed" },
+          404: { description: "User not found" },
+        },
+      },
+    },
+
+    "/api/users/{id}/assignments": {
+      get: {
+        tags: ["Assignments"],
+        summary: "Assignment history for a user",
+        description: "Manager and Admin only, newest first.",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { name: "id", in: "path", required: true, schema: { type: "string", format: "uuid" } },
+        ],
+        responses: {
+          200: { description: "User assignment history" },
+          400: { description: "Malformed id" },
+          401: { description: "No session" },
+          403: { description: "Role not allowed" },
+          404: { description: "User not found" },
+        },
+      },
+    },
   },
 };

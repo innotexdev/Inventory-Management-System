@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { Role } from "../generated/enums";
 import {
+  assignItemHandler,
   changeItemStatusHandler,
   createItemHandler,
   getInventoryStatsHandler,
@@ -8,6 +9,7 @@ import {
   listCategoriesHandler,
   listItemAssignmentsHandler,
   listItemsHandler,
+  unassignItemHandler,
   updateItemHandler,
 } from "../controllers/inventory.controller";
 import { authorize } from "../middleware/authorize";
@@ -19,6 +21,7 @@ import {
   createItemSchema,
   updateItemSchema,
 } from "../validation/inventory.validation";
+import { assignSchema, unassignSchema } from "../validation/assignment.validation";
 
 function useManagerGuard(router: Router): void {
   router.use(requireAuth);
@@ -42,6 +45,18 @@ itemRouter.post(
   validateUuidParam("id"),
   validateBody(changeItemStatusSchema),
   changeItemStatusHandler,
+);
+itemRouter.post(
+  "/:id/assign",
+  validateUuidParam("id"),
+  validateBody(assignSchema),
+  assignItemHandler,
+);
+itemRouter.post(
+  "/:id/unassign",
+  validateUuidParam("id"),
+  validateBody(unassignSchema),
+  unassignItemHandler,
 );
 itemRouter.get("/:id/assignments", validateUuidParam("id"), listItemAssignmentsHandler);
 

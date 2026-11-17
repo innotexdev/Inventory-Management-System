@@ -42,6 +42,12 @@ export class ForbiddenError extends HttpError {
   }
 }
 
+export class ConflictError extends HttpError {
+  constructor(message: string, fields?: Record<string, string>) {
+    super(409, message, "CONFLICT", fields);
+  }
+}
+
 export class DuplicateEmailError extends HttpError {
   constructor() {
     super(409, "Email is already in use", "CONFLICT", { email: "Email is already in use" });

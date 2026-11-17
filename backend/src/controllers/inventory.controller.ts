@@ -3,6 +3,7 @@ import type { ParamsDictionary } from "express-serve-static-core";
 import { AuthenticatedRequest } from "../middleware/require-auth";
 import { parseWith } from "../middleware/validate-body";
 import {
+  assignItem,
   changeItemStatus,
   createItem,
   getInventoryStats,
@@ -10,8 +11,10 @@ import {
   listCategories,
   listItemAssignments,
   listItems,
+  unassignItem,
   updateItem,
 } from "../services/inventory.service";
+import type { AssignInput, UnassignInput } from "../validation/assignment.validation";
 import {
   ChangeItemStatusInput,
   CreateItemInput,
@@ -68,6 +71,32 @@ export async function changeItemStatusHandler(
   try {
     const user = (req as AuthenticatedRequest).user;
     res.json({ data: await changeItemStatus(String(req.params.id), req.body, user.role) });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function assignItemHandler(
+  req: Request<ParamsDictionary, unknown, AssignInput>,
+  res: Response,
+  next: NextFunction,
+) {
+  try {
+    const user = (req as AuthenticatedRequest).user;
+    res.json({ data: await assignItem(String(req.params.id), req.body, user.id) });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function unassignItemHandler(
+  req: Request<ParamsDictionary, unknown, UnassignInput>,
+  res: Response,
+  next: NextFunction,
+) {
+  try {
+    const user = (req as AuthenticatedRequest).user;
+    res.json({ data: await unassignItem(String(req.params.id), req.body, user.id) });
   } catch (err) {
     next(err);
   }

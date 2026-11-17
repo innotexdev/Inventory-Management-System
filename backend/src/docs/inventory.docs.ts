@@ -113,6 +113,8 @@ export const inventoryDocs: OpenApiFragment = {
       post: {
         tags: ["Inventory"],
         summary: "Send to repair, back from repair or retire",
+        description:
+          "Assigning is a separate operation; Assigned is a derived, non-editable status.",
         parameters: [
           { name: "id", in: "path", required: true, schema: { type: "string", format: "uuid" } },
         ],
@@ -133,10 +135,70 @@ export const inventoryDocs: OpenApiFragment = {
         responses: { 200: { description: "Status changed" }, ...errorResponses },
       },
     },
+    "/api/items/{id}/assign": {
+      post: {
+        tags: ["Assignments"],
+        summary: "Assign an available item to an active user",
+        description:
+          "Creates an assignment and makes the item Assigned in one transaction. Two simultaneous requests for the same item produce one assignment and one 409 conflict.",
+        parameters: [
+          { name: "id", in: "path", required: true, schema: { type: "string", format: "uuid" } },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["userId"],
+                properties: {
+                  userId: { type: "string", format: "uuid" },
+                  note: { type: "string", maxLength: 250, nullable: true },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          200: { description: "Item assigned, returns the updated item" },
+          ...errorResponses,
+        },
+      },
+    },
+    "/api/items/{id}/unassign": {
+      post: {
+        tags: ["Assignments"],
+        summary: "Return an assigned item",
+        description:
+          "Closes the active assignment with a return timestamp and actor in one transaction.",
+        parameters: [
+          { name: "id", in: "path", required: true, schema: { type: "string", format: "uuid" } },
+        ],
+        requestBody: {
+          required: false,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                properties: {
+                  note: { type: "string", maxLength: 250, nullable: true },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          200: { description: "Item returned, returns the updated item" },
+          ...errorResponses,
+        },
+      },
+    },
     "/api/items/{id}/assignments": {
       get: {
-        tags: ["Inventory"],
+        tags: ["Assignments"],
         summary: "Item assignment history",
+        description:
+          "Full history for an item, newest first, including who assigned and returned it.",
         parameters: [
           { name: "id", in: "path", required: true, schema: { type: "string", format: "uuid" } },
         ],

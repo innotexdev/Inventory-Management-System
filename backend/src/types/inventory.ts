@@ -39,6 +39,7 @@ export interface AssignmentView {
   returnedAt: string | null;
   note: string | null;
   item: { id: string; assetTag: string; name: string };
+  user: PersonView;
   assignedBy: PersonView;
   returnedBy: PersonView | null;
 }
@@ -67,4 +68,13 @@ export interface InventoryStatsView {
   total: number;
   byStatus: Record<ItemStatusView, number>;
   byCategory: CategoryStatsView[];
+}
+
+export interface UserView extends PersonView {
+  role: "EMPLOYEE" | "MANAGER" | "ADMIN";
+  teamId: string | null;
+  team: { id: string; name: string } | null;
+  isActive: boolean;
+  createdAt: string;
+  heldItemsCount: number;
 }

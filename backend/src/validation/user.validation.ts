@@ -30,3 +30,20 @@ export const changePasswordSchema = z
   });
 
 export type UpdatePasswordInput = z.infer<typeof changePasswordSchema>;
+
+export const userQuerySchema = z.object({
+  search: z.preprocess(
+    (value) => (typeof value === "string" ? value.trim() : value),
+    z.string().max(100).optional(),
+  ),
+  teamId: z.uuid().optional().catch(undefined),
+  role: z.enum(["EMPLOYEE", "MANAGER", "ADMIN"]).optional().catch(undefined),
+  isActive: z.preprocess(
+    (value) => (value === "true" ? true : value === "false" ? false : value),
+    z.boolean().optional().catch(undefined),
+  ),
+  page: z.coerce.number().int().positive().catch(1),
+  pageSize: z.coerce.number().int().positive().max(100).catch(20),
+});
+
+export type UserQuery = z.infer<typeof userQuerySchema>;

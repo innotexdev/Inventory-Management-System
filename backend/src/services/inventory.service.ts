@@ -7,6 +7,7 @@ import {
   NotFoundError,
   ValidationError,
   DuplicateSerialNumberError,
+  ConflictError,
 } from "../lib/errors";
 import { assertStatusTransition, effectiveStatus, type ItemStatusView } from "../lib/item-status";
 import type {
@@ -15,6 +16,7 @@ import type {
   ItemQuery,
   UpdateItemInput,
 } from "../validation/inventory.validation";
+import type { AssignInput, UnassignInput } from "../validation/assignment.validation";
 import type {
   AssignmentView,
   CategoryView,
@@ -273,6 +275,101 @@ export async function changeItemStatus(
   });
 }
 
+export async function assignItem(
+  id: string,
+  data: AssignInput,
+  assignedById: string,
+): Promise<ItemView> {
+  return prisma.$transaction(async (tx) => {
+    const item = await tx.item.findUnique({
+      where: { id },
+      select: {
+        status: true,
+        assignments: { where: { returnedAt: null }, select: { id: true }, take: 1 },
+      },
+    });
+
+    if (!item) {
+      throw new NotFoundError("Item not found");
+    }
+
+    if (effectiveStatus(item.status, item.assignments.length > 0) !== "AVAILABLE") {
+      throw new ConflictError("Item is not available");
+    }
+
+    const user = await tx.user.findUnique({
+      where: { id: data.userId },
+      select: { id: true, isActive: true },
+    });
+
+    if (!user) {
+      throw new NotFoundError("User not found");
+    }
+
+    if (!user.isActive) {
+      throw new ConflictError("User is not active");
+    }
+
+    try {
+      await tx.assignment.create({
+        data: {
+          itemId: id,
+          userId: data.userId,
+          assignedById,
+          note: data.note,
+        },
+      });
+    } catch (err) {
+      if (isUniqueViolation(err)) {
+        throw new ConflictError("Item is not available");
+      }
+      throw err;
+    }
+
+    const updated = await tx.item.findUniqueOrThrow({ where: { id }, select: itemSelect });
+    return toItemView(updated);
+  });
+}
+
+export async function unassignItem(
+  id: string,
+  data: UnassignInput,
+  returnedById: string,
+): Promise<ItemView> {
+  return prisma.$transaction(async (tx) => {
+    const item = await tx.item.findUnique({ where: { id }, select: { id: true } });
+
+    if (!item) {
+      throw new NotFoundError("Item not found");
+    }
+
+    const active = await tx.assignment.findFirst({
+      where: { itemId: id, returnedAt: null },
+      select: { id: true, note: true },
+    });
+
+    if (!active) {
+      throw new ConflictError("Item is not assigned");
+    }
+
+    const result = await tx.assignment.updateMany({
+      where: { id: active.id, returnedAt: null },
+      data: {
+        returnedAt: new Date(),
+        returnedById,
+        note: data.note ?? active.note,
+      },
+    });
+
+    if (result.count === 0) {
+      throw new ConflictError("Item is not assigned");
+    }
+
+    const updated = await tx.item.findUniqueOrThrow({ where: { id }, select: itemSelect });
+    return toItemView(updated);
+  });
+}
+
 export async function listItemAssignments(id: string): Promise<AssignmentView[]> {
   const item = await prisma.item.findUnique({ where: { id }, select: { id: true } });
 
@@ -288,6 +385,7 @@ export async function listItemAssignments(id: string): Promise<AssignmentView[]>
       returnedAt: true,
       note: true,
       item: { select: { id: true, assetTag: true, name: true } },
+      user: { select: personSelect },
       assignedBy: { select: personSelect },
       returnedBy: { select: personSelect },
     },
@@ -300,6 +398,7 @@ export async function listItemAssignments(id: string): Promise<AssignmentView[]>
     returnedAt: row.returnedAt?.toISOString() ?? null,
     note: row.note,
     item: row.item,
+    user: row.user,
     assignedBy: row.assignedBy,
     returnedBy: row.returnedBy,
   }));

@@ -1,7 +1,9 @@
 import * as argon2 from "argon2";
 import { prisma } from "../lib/prisma";
+import type { Prisma } from "../generated/client";
 import { isRecordNotFound, NotFoundError, ValidationError } from "../lib/errors";
-import { UpdatePasswordInput, UpdateUserInput } from "../validation/user.validation";
+import { UpdatePasswordInput, UpdateUserInput, UserQuery } from "../validation/user.validation";
+import type { ListResponse, PageMeta, UserView } from "../types/inventory";
 
 export const userPublicSelect = {
   id: true,
@@ -32,6 +34,92 @@ const personSelect = {
   lastName: true,
   email: true,
 } as const;
+
+const userViewSelect = {
+  id: true,
+  firstName: true,
+  lastName: true,
+  email: true,
+  role: true,
+  teamId: true,
+  team: { select: { id: true, name: true } },
+  isActive: true,
+  createdAt: true,
+  _count: { select: { assignments: { where: { returnedAt: null } } } },
+} as const satisfies Prisma.UserSelect;
+
+type UserViewRecord = Prisma.UserGetPayload<{ select: typeof userViewSelect }>;
+
+function buildMeta(total: number, page: number, pageSize: number): PageMeta {
+  return { page, pageSize, total, totalPages: Math.ceil(total / pageSize) };
+}
+
+function toUserView(row: UserViewRecord): UserView {
+  return {
+    id: row.id,
+    firstName: row.firstName,
+    lastName: row.lastName,
+    email: row.email,
+    role: row.role,
+    teamId: row.teamId,
+    team: row.team,
+    isActive: row.isActive,
+    createdAt: row.createdAt.toISOString(),
+    heldItemsCount: row._count.assignments,
+  };
+}
+
+export async function listUsers(query: UserQuery): Promise<ListResponse<UserView>> {
+  const page = query.page ?? 1;
+  const pageSize = query.pageSize ?? 20;
+  const conditions: Prisma.UserWhereInput[] = [];
+
+  if (query.search) {
+    conditions.push({
+      OR: [
+        { firstName: { contains: query.search, mode: "insensitive" } },
+        { lastName: { contains: query.search, mode: "insensitive" } },
+        { email: { contains: query.search, mode: "insensitive" } },
+      ],
+    });
+  }
+
+  if (query.teamId !== undefined) {
+    conditions.push({ teamId: query.teamId });
+  }
+
+  if (query.role !== undefined) {
+    conditions.push({ role: query.role });
+  }
+
+  if (query.isActive !== undefined) {
+    conditions.push({ isActive: query.isActive });
+  }
+
+  const where: Prisma.UserWhereInput = { AND: conditions };
+  const [rows, total] = await prisma.$transaction([
+    prisma.user.findMany({
+      where,
+      select: userViewSelect,
+      orderBy: [{ lastName: "asc" }, { firstName: "asc" }],
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+    }),
+    prisma.user.count({ where }),
+  ]);
+
+  return { data: rows.map(toUserView), meta: buildMeta(total, page, pageSize) };
+}
+
+export async function getUser(id: string): Promise<UserView> {
+  const row = await prisma.user.findUnique({ where: { id }, select: userViewSelect });
+
+  if (!row) {
+    throw new NotFoundError("User not found");
+  }
+
+  return toUserView(row);
+}
 
 export async function updateUser(userId: string, data: UpdateUserInput) {
   try {

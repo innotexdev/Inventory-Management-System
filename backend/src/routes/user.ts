@@ -1,12 +1,19 @@
 import { Router } from "express";
+import { Role } from "../generated/enums";
+import { authorize } from "../middleware/authorize";
 import { requireAuth } from "../middleware/require-auth";
 import {
   changeUserPassword,
   getMyAssignments,
   getMyItems,
+  getUserAssignmentsHandler,
+  getUserHandler,
+  getUserItemsHandler,
+  listUsersHandler,
   updateMyInfo,
 } from "../controllers/user.controller";
 import { validateBody } from "../middleware/validate-body";
+import { validateUuidParam } from "../middleware/validate-uuid-param";
 import { changePasswordSchema, updateUserSchema } from "../validation/user.validation";
 
 const router = Router();
@@ -17,5 +24,14 @@ router.patch("/me", validateBody(updateUserSchema), updateMyInfo);
 router.patch("/me/password", validateBody(changePasswordSchema), changeUserPassword);
 router.get("/me/items", getMyItems);
 router.get("/me/assignments", getMyAssignments);
+
+const managerRouter = Router();
+managerRouter.use(authorize(Role.MANAGER));
+managerRouter.get("/", listUsersHandler);
+managerRouter.get("/:id", validateUuidParam("id"), getUserHandler);
+managerRouter.get("/:id/items", validateUuidParam("id"), getUserItemsHandler);
+managerRouter.get("/:id/assignments", validateUuidParam("id"), getUserAssignmentsHandler);
+
+router.use(managerRouter);
 
 export default router;
