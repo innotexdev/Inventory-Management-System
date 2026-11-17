@@ -117,6 +117,22 @@ export const itemSchema = z.object({
 
 export const itemStatusSchema = z.enum(["AVAILABLE", "IN_REPAIR", "RETIRED"]);
 
+const noteField = z.preprocess(
+  (value) => (typeof value === "string" && value.trim() === "" ? null : value),
+  z
+    .string({ error: "Note must be text" })
+    .trim()
+    .max(250, "Note must be at most 250 characters")
+    .nullish(),
+);
+
+export const assignSchema = z.object({
+  userId: z.uuid("Select a user"),
+  note: noteField,
+});
+
+export const unassignSchema = z.object({ note: noteField }).default({});
+
 export type RegisterValues = z.infer<typeof registerSchema>;
 export type LoginValues = z.infer<typeof loginSchema>;
 export type UpdateProfileValues = z.infer<typeof updateProfileSchema>;
@@ -124,3 +140,5 @@ export type ChangePasswordValues = z.infer<typeof changePasswordSchema>;
 export type ItemInput = z.input<typeof itemSchema>;
 export type ItemValues = z.infer<typeof itemSchema>;
 export type ItemStatusValue = z.infer<typeof itemStatusSchema>;
+export type AssignValues = z.input<typeof assignSchema>;
+export type UnassignValues = z.input<typeof unassignSchema>;

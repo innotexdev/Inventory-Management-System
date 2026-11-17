@@ -8,6 +8,8 @@ import {
   changePasswordSchema,
   itemSchema,
   itemStatusSchema,
+  assignSchema,
+  unassignSchema,
 } from "../lib/validation";
 import { isSafeNextPath } from "../lib/safe-path";
 
@@ -432,5 +434,55 @@ describe("itemStatusSchema", () => {
   it("rejects ASSIGNED and unknown values", () => {
     assert.equal(itemStatusSchema.safeParse("ASSIGNED").success, false);
     assert.equal(itemStatusSchema.safeParse("UNKNOWN").success, false);
+  });
+});
+
+const USER_ID = "22222222-2222-4222-8222-222222222222";
+
+describe("assignSchema", () => {
+  it("accepts a user id with no note", () => {
+    const result = assignSchema.safeParse({ userId: USER_ID });
+    assert.ok(result.success);
+    assert.equal(result.data?.note, undefined);
+  });
+
+  it("trims a note", () => {
+    const result = assignSchema.safeParse({ userId: USER_ID, note: "  Handover  " });
+    assert.ok(result.success);
+    assert.equal(result.data?.note, "Handover");
+  });
+
+  it("rejects a missing user id", () => {
+    assert.ok("userId" in fieldErrors(assignSchema, {}));
+  });
+
+  it("rejects a malformed user id", () => {
+    assert.ok("userId" in fieldErrors(assignSchema, { userId: "nope" }));
+  });
+
+  it("rejects a note longer than 250 characters", () => {
+    assert.ok("note" in fieldErrors(assignSchema, { userId: USER_ID, note: "a".repeat(251) }));
+  });
+
+  it("treats a whitespace-only note as empty", () => {
+    const result = assignSchema.safeParse({ userId: USER_ID, note: "   " });
+    assert.ok(result.success);
+    assert.equal(result.data?.note, null);
+  });
+});
+
+describe("unassignSchema", () => {
+  it("accepts an empty body", () => {
+    assert.ok(unassignSchema.safeParse({}).success);
+  });
+
+  it("accepts an optional note", () => {
+    const result = unassignSchema.safeParse({ note: "Returned to stock" });
+    assert.ok(result.success);
+    assert.equal(result.data?.note, "Returned to stock");
+  });
+
+  it("rejects a note longer than 250 characters", () => {
+    assert.ok("note" in fieldErrors(unassignSchema, { note: "a".repeat(251) }));
   });
 });

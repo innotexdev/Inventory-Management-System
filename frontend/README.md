@@ -12,7 +12,12 @@ Next.js 16 + Tailwind CSS 4 + TypeScript.
 - Milestone 4 = inventory. Every inventory screen exposed by the backend API is
   built: `/inventory` (list), `/inventory/new` (create), `/inventory/[id]`
   (detail, history and status changes), `/inventory/[id]/edit` and `/dashboard`
-  (totals). Assign and unassign need endpoints that are not in the API yet.
+  (totals).
+- Milestone 5 = assignments. `/users` (searchable, filterable, paginated list)
+  and `/users/[id]` (profile, current items, history, assign and unassign) are
+  added. Assign and unassign are available on item detail and user detail with
+  searchable pickers, optional notes and confirmation dialogs. Every mutation
+  revalidates the affected item, user, inventory and dashboard paths.
 
 ## Auth features
 
@@ -60,7 +65,14 @@ frontend will consume them from the inventory screens:
 | GET    | `/api/items/:id`             | Item detail and current holder                 |
 | PATCH  | `/api/items/:id`             | Edit item fields                               |
 | POST   | `/api/items/:id/status`      | Repair, back from repair, retire               |
+| POST   | `/api/items/:id/assign`      | Assign an available item to an active user     |
+| POST   | `/api/items/:id/unassign`    | Return an assigned item                        |
 | GET    | `/api/items/:id/assignments` | Item history                                   |
+| GET    | `/api/users`                 | Users list and active-user picker              |
+| GET    | `/api/users/:id`             | User detail                                    |
+| GET    | `/api/users/:id/items`       | Items held by a user                           |
+| GET    | `/api/users/:id/assignments` | User history                                   |
+| GET    | `/api/teams`                 | Team filter options                            |
 | GET    | `/api/stats/inventory`       | Dashboard totals                               |
 
 Search, filters, sort and page are kept in the URL so refresh and shared links
@@ -102,10 +114,38 @@ derived status whenever an item has an active assignment, which matches the
 - `/dashboard` (Manager and Admin) renders totals per status and a per-category
   breakdown from `GET /api/stats/inventory`. Every number links to the filtered
   inventory list.
-- Assign and Unassign are intentionally absent: the backend has no
-  `/api/items/:id/assign` or `/unassign` endpoint yet. The item history also
-  cannot show the holder because `GET /api/items/:id/assignments` does not
-  return the holder user.
+- The item history shows the holder of every period alongside who assigned and
+  returned it, because `GET /api/items/:id/assignments` returns the holder user.
+  Retired items and deactivated users stay visible in history.
+
+## Users and assignments (Milestone 5)
+
+- `/users` is restricted to Manager and Admin by `requireRole` on the server.
+  Search (name or email), team, role and active status filters and the page
+  live in the URL, so refresh and shared links reproduce the result. The table
+  shows each user's role, team, status and current item count, with an empty
+  state, a clear-filters link and server pagination via the shared `DataTable`.
+- `/users/[id]` shows the same profile data, the user's current equipment and
+  full assignment history. Malformed or unknown ids show the 404 page. The
+  available-item picker lists only Available items and the user picker on item
+  detail lists only active users; both are searchable inside a native dialog.
+- Assign is available from item detail (pick a user) and user detail (pick an
+  item). Unassign asks for confirmation and is shown only for items with an
+  active assignment. Both accept an optional note of at most 250 characters,
+  disable their submit button while pending and cannot be submitted twice.
+- On success the page refreshes with fresh data and the affected item, user,
+  inventory, my-inventory and dashboard paths are revalidated. A conflict is
+  shown inline and the dialog stays open; refreshing the page shows the item's
+  real current state.
+- Client validation uses the same `assignSchema` and `unassignSchema` that the
+  Server Actions re-run before calling the API, so client and server rules
+  cannot drift. Roles are checked on the server for both the pages and the
+  endpoints; hiding a control is not the security boundary.
+- Dialogs use the native `<dialog>` element, which traps focus while open and
+  restores it to the trigger on close. Labels, errors and the results count are
+  wired for screen readers, and every control works from the keyboard.
+- `/users` navigation appears only for Manager and Admin alongside the other
+  role-gated links.
 
 ## Prerequisites
 

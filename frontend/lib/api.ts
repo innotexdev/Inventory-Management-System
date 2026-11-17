@@ -51,6 +51,7 @@ export interface ItemAssignment {
   returnedAt: string | null;
   note: string | null;
   item: { id: string; assetTag: string; name: string };
+  user: AssignmentPerson;
   assignedBy: AssignmentPerson;
   returnedBy: AssignmentPerson | null;
 }
@@ -105,6 +106,24 @@ export interface UserAssignment {
   item: HeldItem;
   assignedBy: AssignmentPerson;
   returnedBy: AssignmentPerson | null;
+}
+
+export interface UserView {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  role: Role;
+  teamId: string | null;
+  team: { id: string; name: string } | null;
+  isActive: boolean;
+  createdAt: string;
+  heldItemsCount: number;
+}
+
+export interface TeamView {
+  id: string;
+  name: string;
 }
 
 interface ApiErrorBody {

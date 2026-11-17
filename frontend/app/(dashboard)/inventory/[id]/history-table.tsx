@@ -6,6 +6,13 @@ import { EMPTY_VALUE, formatDate, fullName } from "@/lib/format";
 
 const columns: DataTableColumn<ItemAssignment>[] = [
   {
+    id: "holder",
+    header: "Holder",
+    cell: (row) => fullName(row.user),
+    sortValue: (row) => fullName(row.user),
+    searchValue: (row) => fullName(row.user),
+  },
+  {
     id: "assignedAt",
     header: "Assigned",
     cell: (row) => formatDate(row.assignedAt),

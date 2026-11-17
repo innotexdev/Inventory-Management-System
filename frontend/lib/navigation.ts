@@ -24,6 +24,7 @@ export function linksForRole(role: Role | null): NavLinkType[] {
     return [
       { href: "/my-inventory", label: "My inventory" },
       { href: "/inventory", label: "Inventory" },
+      { href: "/users", label: "Users" },
       { href: "/dashboard", label: "Dashboard" },
       { href: "/profile", label: "Profile" },
     ];

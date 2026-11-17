@@ -6,6 +6,8 @@ import { StatusBadge } from "@/components/status-badge";
 import { hasMinRole, requireRole } from "@/lib/auth";
 import { EMPTY_VALUE, formatDate, fullName } from "@/lib/format";
 import { getItem, getItemAssignments } from "@/lib/inventory";
+import { getUsers } from "@/lib/users";
+import { ItemAssignmentActions } from "./assignment-actions";
 import { ItemHistoryTable } from "./history-table";
 import { StatusActions } from "./status-actions";
 
@@ -34,7 +36,16 @@ export default async function ItemDetailPage({ params }: { params: Promise<{ id:
     notFound();
   }
 
-  const assignments = await getItemAssignments(id);
+  const [assignments, activeUsers] = await Promise.all([
+    getItemAssignments(id),
+    getUsers({ isActive: true, page: 1, pageSize: 100 }),
+  ]);
+
+  const userOptions = activeUsers.data.map((person) => ({
+    id: person.id,
+    title: fullName(person),
+    subtitle: person.email,
+  }));
 
   const details: { label: string; value: string }[] = [
     { label: "Asset tag", value: item.assetTag },
@@ -102,6 +113,16 @@ export default async function ItemDetailPage({ params }: { params: Promise<{ id:
           >
             Edit item
           </Link>
+          <ItemAssignmentActions
+            itemId={item.id}
+            status={item.status}
+            holder={
+              item.currentHolder
+                ? { id: item.currentHolder.id, name: fullName(item.currentHolder) }
+                : null
+            }
+            users={userOptions}
+          />
           <StatusActions
             itemId={item.id}
             status={item.status}

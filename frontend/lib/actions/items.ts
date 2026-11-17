@@ -6,10 +6,14 @@ import { redirect } from "next/navigation";
 import { apiRequest, readApiError } from "@/lib/api";
 import { flattenZodErrors } from "@/lib/flatten-zod-errors";
 import {
+  assignSchema,
   itemSchema,
   itemStatusSchema,
+  unassignSchema,
+  type AssignValues,
   type ItemInput,
   type ItemStatusValue,
+  type UnassignValues,
 } from "@/lib/validation";
 
 export interface ItemActionState {
@@ -90,6 +94,79 @@ export async function updateItemAction(id: string, values: ItemInput): Promise<I
 
   revalidateItemPaths(id);
   return { success: "Item updated." };
+}
+
+function revalidateAssignmentPaths(holderId?: string | null): void {
+  revalidatePath("/users");
+  revalidatePath("/my-inventory");
+  if (holderId) {
+    revalidatePath(`/users/${holderId}`);
+  }
+}
+
+export async function assignItemAction(id: string, values: AssignValues): Promise<ItemActionState> {
+  const parsed = assignSchema.safeParse(values);
+  if (!parsed.success) {
+    return {
+      fieldErrors: flattenZodErrors(parsed.error),
+      formError: "Please fix the highlighted fields.",
+    };
+  }
+
+  let res: Response;
+  try {
+    res = await authedRequest(`/api/items/${id}/assign`, "POST", parsed.data);
+  } catch {
+    return { formError: "Could not reach the server. Try again." };
+  }
+  if (res.status === 401) {
+    redirect("/login");
+  }
+  if (!res.ok) {
+    const { message, fields } = await readApiError(res);
+    return { fieldErrors: fields, formError: message };
+  }
+
+  const { data } = (await res.json()) as {
+    data: { id: string; currentHolder: { id: string } | null };
+  };
+  revalidateItemPaths(data.id);
+  revalidateAssignmentPaths(data.currentHolder?.id);
+  return { success: "Item assigned." };
+}
+
+export async function unassignItemAction(
+  id: string,
+  values: UnassignValues,
+): Promise<ItemActionState> {
+  const parsed = unassignSchema.safeParse(values);
+  if (!parsed.success) {
+    return {
+      fieldErrors: flattenZodErrors(parsed.error),
+      formError: "Please fix the highlighted fields.",
+    };
+  }
+
+  let res: Response;
+  try {
+    res = await authedRequest(`/api/items/${id}/unassign`, "POST", parsed.data);
+  } catch {
+    return { formError: "Could not reach the server. Try again." };
+  }
+  if (res.status === 401) {
+    redirect("/login");
+  }
+  if (!res.ok) {
+    const { message, fields } = await readApiError(res);
+    return { fieldErrors: fields, formError: message };
+  }
+
+  const { data } = (await res.json()) as {
+    data: { id: string; currentHolder: { id: string } | null };
+  };
+  revalidateItemPaths(data.id);
+  revalidateAssignmentPaths(data.currentHolder?.id);
+  return { success: "Item unassigned." };
 }
 
 export async function changeItemStatusAction(

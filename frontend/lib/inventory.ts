@@ -52,6 +52,16 @@ export async function getCategories(): Promise<CategoryView[]> {
   return data;
 }
 
+export async function getAvailableItems(): Promise<InventoryItem[]> {
+  const params = new URLSearchParams({ status: "AVAILABLE", pageSize: "100", sort: "name" });
+  const res = await authedGet(`/api/items?${params.toString()}`);
+  if (!res.ok) {
+    throw new Error(`GET /api/items (available) failed with ${res.status}`);
+  }
+  const { data } = (await res.json()) as ListResponse<InventoryItem>;
+  return data;
+}
+
 export async function getInventoryStats(): Promise<InventoryStats> {
   const res = await authedGet("/api/stats/inventory");
   if (!res.ok) {
