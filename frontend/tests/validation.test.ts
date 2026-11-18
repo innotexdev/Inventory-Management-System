@@ -10,6 +10,7 @@ import {
   itemStatusSchema,
   assignSchema,
   unassignSchema,
+  teamSchema,
 } from "../lib/validation";
 import { isSafeNextPath } from "../lib/safe-path";
 
@@ -484,5 +485,28 @@ describe("unassignSchema", () => {
 
   it("rejects a note longer than 250 characters", () => {
     assert.ok("note" in fieldErrors(unassignSchema, { note: "a".repeat(251) }));
+  });
+});
+
+describe("teamSchema", () => {
+  it("trims and accepts a valid team", () => {
+    const result = teamSchema.safeParse({
+      name: "  Engineering  ",
+      description: "  Build systems  ",
+    });
+    assert.ok(result.success);
+    assert.equal(result.data?.name, "Engineering");
+    assert.equal(result.data?.description, "Build systems");
+  });
+
+  it("rejects a short team name", () => {
+    assert.ok("name" in fieldErrors(teamSchema, { name: " " }));
+  });
+
+  it("rejects a description longer than 250 characters", () => {
+    assert.ok(
+      "description" in
+        fieldErrors(teamSchema, { name: "Engineering", description: "a".repeat(251) }),
+    );
   });
 });

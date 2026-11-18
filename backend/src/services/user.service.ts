@@ -2,7 +2,13 @@ import * as argon2 from "argon2";
 import { prisma } from "../lib/prisma";
 import type { Prisma } from "../generated/client";
 import { isRecordNotFound, NotFoundError, ValidationError } from "../lib/errors";
-import { UpdatePasswordInput, UpdateUserInput, UserQuery } from "../validation/user.validation";
+import {
+  AdminUpdateUserInput,
+  UpdatePasswordInput,
+  UpdateUserInput,
+  UserQuery,
+} from "../validation/user.validation";
+import { ConflictError } from "../lib/errors";
 import type { ListResponse, PageMeta, UserView } from "../types/inventory";
 
 export const userPublicSelect = {
@@ -117,8 +123,64 @@ export async function getUser(id: string): Promise<UserView> {
   if (!row) {
     throw new NotFoundError("User not found");
   }
-
   return toUserView(row);
+}
+
+export async function adminUpdateUser(
+  actorId: string,
+  targetId: string,
+  data: AdminUpdateUserInput,
+): Promise<UserView> {
+  const target = await prisma.user.findUnique({
+    where: { id: targetId },
+    select: { id: true, role: true, isActive: true },
+  });
+  if (!target) {
+    throw new NotFoundError("User not found");
+  }
+
+  if (actorId === targetId && data.role !== undefined && data.role !== target.role) {
+    throw new ConflictError("You cannot change your own role");
+  }
+  if (actorId === targetId && data.isActive === false) {
+    throw new ConflictError("You cannot deactivate yourself");
+  }
+
+  if (target.role === "ADMIN" && target.isActive) {
+    const nextRole = data.role ?? target.role;
+    const nextActive = data.isActive ?? target.isActive;
+    if (nextRole !== "ADMIN" || !nextActive) {
+      const activeAdminCount = await prisma.user.count({
+        where: { role: "ADMIN", isActive: true },
+      });
+      if (activeAdminCount <= 1) {
+        throw new ConflictError("The last active Admin cannot be demoted or deactivated");
+      }
+    }
+  }
+
+  if (data.isActive === false) {
+    const heldCount = await prisma.assignment.count({
+      where: { userId: targetId, returnedAt: null },
+    });
+    if (heldCount > 0) {
+      throw new ConflictError("User still holds items");
+    }
+  }
+
+  if (data.teamId !== undefined && data.teamId !== null) {
+    const team = await prisma.team.findUnique({ where: { id: data.teamId }, select: { id: true } });
+    if (!team) {
+      throw new NotFoundError("Team not found");
+    }
+  }
+
+  const updated = await prisma.user.update({
+    where: { id: targetId },
+    data,
+    select: { id: true },
+  });
+  return getUser(updated.id);
 }
 
 export async function updateUser(userId: string, data: UpdateUserInput) {

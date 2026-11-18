@@ -15,6 +15,9 @@ Express + Prisma (PostgreSQL) REST API.
 - Milestone 5 = assignments: assign and unassign items, users list/detail with
   current items and history, a read-only teams list for filtering, and API
   integration tests for every row of the assign/unassign rules table.
+- Milestone 6 = teams and administration: teams with member and held-item
+  totals, Admin-only team management, and Admin-only user role/team/status
+  updates with self-action and last-Admin protections.
 
 ## Prerequisites
 

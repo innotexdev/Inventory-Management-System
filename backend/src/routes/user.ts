@@ -11,10 +11,15 @@ import {
   getUserItemsHandler,
   listUsersHandler,
   updateMyInfo,
+  adminUpdateUserHandler,
 } from "../controllers/user.controller";
 import { validateBody } from "../middleware/validate-body";
 import { validateUuidParam } from "../middleware/validate-uuid-param";
-import { changePasswordSchema, updateUserSchema } from "../validation/user.validation";
+import {
+  adminUpdateUserSchema,
+  changePasswordSchema,
+  updateUserSchema,
+} from "../validation/user.validation";
 
 const router = Router();
 
@@ -31,6 +36,14 @@ managerRouter.get("/", listUsersHandler);
 managerRouter.get("/:id", validateUuidParam("id"), getUserHandler);
 managerRouter.get("/:id/items", validateUuidParam("id"), getUserItemsHandler);
 managerRouter.get("/:id/assignments", validateUuidParam("id"), getUserAssignmentsHandler);
+
+router.patch(
+  "/:id",
+  authorize(Role.ADMIN),
+  validateUuidParam("id"),
+  validateBody(adminUpdateUserSchema),
+  adminUpdateUserHandler,
+);
 
 router.use(managerRouter);
 

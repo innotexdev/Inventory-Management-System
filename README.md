@@ -32,6 +32,12 @@ pull request, a demo and a review before the next one starts.
   the assign/unassign rules table (including two simultaneous assigns).
   Assignment and unassignment run in one transaction each; the database's
   partial unique index guarantees exactly one active assignment per item.
+- Milestone 6 — teams and administration: team views and member equipment totals,
+  Admin-only team create, rename and delete controls, and Admin-only role, team
+  and active-status controls on user detail. The final implementation includes
+  server-side rules for self-demotion, self-deactivation, last-Admin protection,
+  active assignments, team deletion and remaining validation and accessibility
+  checks.
 
 Milestones 1–5 are implemented in both apps for every API operation the backend
 exposes.

@@ -35,7 +35,7 @@ export function ConfirmDialog({
             : "bg-zinc-950 text-zinc-50 hover:bg-zinc-800 dark:bg-zinc-50 dark:text-zinc-950 dark:hover:bg-zinc-200"
         }`}
       >
-        {label}aaaaa
+        {label}
       </button>
       <dialog
         ref={dialogRef}

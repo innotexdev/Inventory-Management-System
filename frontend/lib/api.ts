@@ -124,6 +124,17 @@ export interface UserView {
 export interface TeamView {
   id: string;
   name: string;
+  description: string | null;
+  memberCount: number;
+  heldItemsCount: number;
+  members: Array<{
+    id: string;
+    firstName: string;
+    lastName: string;
+    role: Role;
+    isActive: boolean;
+    heldItemsCount: number;
+  }>;
 }
 
 interface ApiErrorBody {

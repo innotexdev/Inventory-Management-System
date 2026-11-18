@@ -12,6 +12,8 @@ import {
   type AssignedItemRow,
 } from "../../my-inventory/inventory-tables";
 import { UserAssignmentActions } from "./user-assignment-actions";
+import { getTeams } from "@/lib/teams";
+import { UserAdminActions } from "./user-admin-actions";
 
 export const instant = false;
 
@@ -27,7 +29,7 @@ const backLinkClassName =
   "rounded-sm text-sm font-medium text-zinc-600 underline underline-offset-4 transition-colors hover:text-zinc-950 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-950 dark:text-zinc-400 dark:hover:text-zinc-50 dark:focus-visible:outline-zinc-50";
 
 export default async function UserDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  await requireRole("MANAGER", "/users");
+  const actor = await requireRole("MANAGER", "/users");
   const { id } = await params;
   if (!z.uuid().safeParse(id).success) {
     notFound();
@@ -43,6 +45,7 @@ export default async function UserDetailPage({ params }: { params: Promise<{ id:
     getUserAssignments(id),
     getAvailableItems(),
   ]);
+  const teams = actor.role === "ADMIN" ? await getTeams() : [];
 
   const assignedAtById = new Map<string, string>();
   for (const assignment of assignments) {
@@ -91,6 +94,8 @@ export default async function UserDetailPage({ params }: { params: Promise<{ id:
           ))}
         </dl>
       </section>
+
+      {actor.role === "ADMIN" ? <UserAdminActions user={user} teams={teams} /> : null}
 
       <section aria-labelledby="user-assignments-heading" className={sectionClassName}>
         <h2

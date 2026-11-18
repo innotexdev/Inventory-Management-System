@@ -12,6 +12,19 @@ export const updateUserSchema = z
 
 export type UpdateUserInput = z.infer<typeof updateUserSchema>;
 
+export const adminUpdateUserSchema = z
+  .object({
+    role: z.enum(["EMPLOYEE", "MANAGER", "ADMIN"]).optional(),
+    teamId: z.union([z.uuid(), z.null()]).optional(),
+    isActive: z.boolean().optional(),
+  })
+  .refine((data) => Object.values(data).some((value) => value !== undefined), {
+    error: "No fields to update",
+    path: ["form"],
+  });
+
+export type AdminUpdateUserInput = z.infer<typeof adminUpdateUserSchema>;
+
 export const changePasswordSchema = z
   .object({
     oldPassword: z.string({ message: "Current Password is required" }),

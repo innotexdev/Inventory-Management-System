@@ -133,6 +133,15 @@ export const assignSchema = z.object({
 
 export const unassignSchema = z.object({ note: noteField }).default({});
 
+export const teamSchema = z.object({
+  name: z
+    .string({ error: "Team name is required" })
+    .trim()
+    .min(2, "Team name must be at least 2 characters")
+    .max(50, "Team name must be at most 50 characters"),
+  description: itemOptionalText(250, "Description"),
+});
+
 export type RegisterValues = z.infer<typeof registerSchema>;
 export type LoginValues = z.infer<typeof loginSchema>;
 export type UpdateProfileValues = z.infer<typeof updateProfileSchema>;

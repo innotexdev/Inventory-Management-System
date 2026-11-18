@@ -9,11 +9,13 @@ import {
   listCurrentItemsForUser,
   listUsers,
   updateUser,
+  adminUpdateUser,
 } from "../services/user.service";
 import {
   UpdatePasswordInput,
   UpdateUserInput,
   userQuerySchema,
+  AdminUpdateUserInput,
 } from "../validation/user.validation";
 
 export async function updateMyInfo(
@@ -78,6 +80,19 @@ export async function listUsersHandler(req: Request, res: Response, next: NextFu
 export async function getUserHandler(req: Request, res: Response, next: NextFunction) {
   try {
     res.json({ data: await getUser(String(req.params.id)) });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function adminUpdateUserHandler(
+  req: Request<ParamsDictionary, unknown, AdminUpdateUserInput>,
+  res: Response,
+  next: NextFunction,
+) {
+  try {
+    const actor = (req as AuthenticatedRequest).user;
+    res.json({ data: await adminUpdateUser(actor.id, String(req.params.id), req.body) });
   } catch (err) {
     next(err);
   }

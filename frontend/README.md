@@ -18,6 +18,10 @@ Next.js 16 + Tailwind CSS 4 + TypeScript.
   added. Assign and unassign are available on item detail and user detail with
   searchable pickers, optional notes and confirmation dialogs. Every mutation
   revalidates the affected item, user, inventory and dashboard paths.
+- Milestone 6 = teams and administration. `/teams` groups members and their
+  held items, with a separate No team group. `/teams/manage` provides
+  Admin-only create, rename and delete actions. `/users/[id]` provides
+  Admin-only role, team and activation controls.
 
 ## Auth features
 
