@@ -8,6 +8,7 @@ import {
   ValidationError,
   DuplicateSerialNumberError,
   ConflictError,
+  ForbiddenError,
 } from "../lib/errors";
 import { assertStatusTransition, effectiveStatus, type ItemStatusView } from "../lib/item-status";
 import type {
@@ -299,7 +300,7 @@ export async function assignItem(
 
     const user = await tx.user.findUnique({
       where: { id: data.userId },
-      select: { id: true, isActive: true },
+      select: { id: true, isActive: true, teamId: true },
     });
 
     if (!user) {
@@ -308,6 +309,19 @@ export async function assignItem(
 
     if (!user.isActive) {
       throw new ConflictError("User is not active");
+    }
+
+    const assigner = await tx.user.findUnique({
+      where: { id: assignedById },
+      select: { role: true, teamId: true },
+    });
+
+    if (!assigner) {
+      throw new NotFoundError("User not found");
+    }
+
+    if (assigner.role === Role.MANAGER && (!assigner.teamId || assigner.teamId !== user.teamId)) {
+      throw new ForbiddenError("Managers can only assign items to members of their own team");
     }
 
     try {
@@ -345,11 +359,29 @@ export async function unassignItem(
 
     const active = await tx.assignment.findFirst({
       where: { itemId: id, returnedAt: null },
-      select: { id: true, note: true },
+      select: { id: true, note: true, user: { select: { teamId: true } } },
     });
 
     if (!active) {
       throw new ConflictError("Item is not assigned");
+    }
+
+    const returner = await tx.user.findUnique({
+      where: { id: returnedById },
+      select: { role: true, teamId: true },
+    });
+
+    if (!returner) {
+      throw new NotFoundError("User not found");
+    }
+
+    if (
+      returner.role === Role.MANAGER &&
+      (!returner.teamId || returner.teamId !== active.user.teamId)
+    ) {
+      throw new ForbiddenError(
+        "Managers can only unassign items held by members of their own team",
+      );
     }
 
     const result = await tx.assignment.updateMany({

@@ -16,10 +16,12 @@ describe("Assignment routes", () => {
   let employeeCookie: string;
   let managerId: string;
   let adminId: string;
+  let managerTeamId: string;
   let categoryId: string;
   let activeUserId: string;
   let inactiveUserId: string;
   let otherUserId: string;
+  let outsiderUserId: string;
   const stamp = Date.now().toString(36);
   const createdItemIds: string[] = [];
   const createdUserIds: string[] = [];
@@ -102,6 +104,8 @@ describe("Assignment routes", () => {
 
     const manager = await prisma.user.findFirstOrThrow({ where: { role: Role.MANAGER } });
     const admin = await prisma.user.findFirstOrThrow({ where: { role: Role.ADMIN } });
+    assert.ok(manager.teamId, "seed manager must belong to a team");
+    managerTeamId = manager.teamId;
     managerId = manager.id;
     adminId = admin.id;
 
@@ -113,6 +117,7 @@ describe("Assignment routes", () => {
       ["active", true],
       ["inactive", false],
       ["other", true],
+      ["outsider", true],
     ] as const) {
       const user = await prisma.user.create({
         data: {
@@ -121,6 +126,7 @@ describe("Assignment routes", () => {
           email: `m5-${key}-${stamp}@example.com`,
           passwordHash: "unused",
           isActive,
+          teamId: key === "outsider" ? undefined : managerTeamId,
         },
         select: { id: true },
       });
@@ -128,6 +134,7 @@ describe("Assignment routes", () => {
       if (key === "active") activeUserId = user.id;
       if (key === "inactive") inactiveUserId = user.id;
       if (key === "other") otherUserId = user.id;
+      if (key === "outsider") outsiderUserId = user.id;
     }
   });
 
@@ -288,6 +295,27 @@ describe("Assignment routes", () => {
       };
       assert.equal(body.data.currentHolder?.id, managerId);
     });
+
+    it("rejects a Manager assigning to a user outside their team with 403", async () => {
+      const itemId = await makeItem();
+      const res = await postJson(
+        `/api/items/${itemId}/assign`,
+        { userId: outsiderUserId },
+        managerCookie,
+      );
+      assert.equal(res.status, 403);
+      assert.equal((await history(itemId)).length, 0);
+    });
+
+    it("lets an Admin assign to a user in any team", async () => {
+      const itemId = await makeItem();
+      const res = await postJson(
+        `/api/items/${itemId}/assign`,
+        { userId: outsiderUserId },
+        adminCookie,
+      );
+      assert.equal(res.status, 200);
+    });
   });
 
   describe("POST /api/items/:id/unassign", () => {
@@ -384,6 +412,18 @@ describe("Assignment routes", () => {
       assert.ok(returned);
       assert.equal(returned.returnedBy?.id, managerId);
       assert.equal(active.assignedBy.id, adminId);
+    });
+
+    it("rejects a Manager unassigning an item held outside their team", async () => {
+      const itemId = await makeItem();
+      await makeAssignment(itemId, outsiderUserId);
+
+      const denied = await postJson(`/api/items/${itemId}/unassign`, {}, managerCookie);
+      assert.equal(denied.status, 403);
+      assert.equal((await history(itemId))[0].returnedAt, null);
+
+      const allowed = await postJson(`/api/items/${itemId}/unassign`, {}, adminCookie);
+      assert.equal(allowed.status, 200);
     });
   });
 });

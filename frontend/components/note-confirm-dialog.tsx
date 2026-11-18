@@ -60,7 +60,7 @@ export function NoteConfirmDialog({
         ref={dialogRef}
         aria-labelledby={titleId}
         aria-describedby={descriptionId}
-        className="w-[min(24rem,calc(100vw-2rem))] rounded-xl border border-zinc-200 bg-white p-6 text-zinc-950 shadow-xl dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-50"
+        className="m-auto w-[min(24rem,calc(100vw-2rem))] rounded-xl border border-zinc-200 bg-white p-6 text-zinc-950 shadow-xl backdrop:bg-black/90 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-50"
       >
         <h2 id={titleId} className="text-lg font-semibold">
           {title}
