@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import type { NavLinkType } from "@/lib/navigation";
 import { LogoutButton } from "./logout-button";
 import { NavLink } from "./nav-link";
+import { ThemeToggle } from "./theme-toggle";
 
 interface MobileNavProps {
   links: NavLinkType[];
@@ -43,7 +44,8 @@ export function MobileNav({ links, isAuthenticated }: MobileNavProps) {
   }, [open]);
 
   return (
-    <div className="md:hidden">
+    <div className="flex items-center gap-2 md:hidden">
+      <ThemeToggle />
       <button
         type="button"
         aria-expanded={open}

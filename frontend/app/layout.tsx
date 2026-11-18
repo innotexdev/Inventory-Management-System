@@ -16,6 +16,21 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const themeInitializationScript = `
+  try {
+    const savedTheme = localStorage.getItem("theme");
+    const isDark = savedTheme
+      ? savedTheme === "dark"
+      : window.matchMedia("(prefers-color-scheme: dark)").matches;
+    document.documentElement.classList.toggle("dark", isDark);
+  } catch {
+    document.documentElement.classList.toggle(
+      "dark",
+      window.matchMedia("(prefers-color-scheme: dark)").matches,
+    );
+  }
+`;
+
 export const metadata: Metadata = {
   title: {
     default: "Inventory",
@@ -26,7 +41,17 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
+    <html
+      lang="en"
+      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      suppressHydrationWarning
+    >
+      <head>
+        <script
+          id="theme-initialization"
+          dangerouslySetInnerHTML={{ __html: themeInitializationScript }}
+        />
+      </head>
       <body className="min-h-full flex flex-col">
         <Suspense fallback={<SiteHeader />}>
           <SiteNav />

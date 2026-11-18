@@ -4,6 +4,7 @@ import { LogoutButton } from "./logout-button";
 import { MobileNav } from "./mobile-nav";
 import { SiteHeader } from "./site-header";
 import { NavLink } from "./nav-link";
+import { ThemeToggle } from "./theme-toggle";
 
 export async function SiteNav() {
   const user = await getCurrentUser().catch(() => null);
@@ -23,6 +24,7 @@ export async function SiteNav() {
           </NavLink>
         ))}
 
+        <ThemeToggle />
         {user ? <LogoutButton /> : null}
       </div>
 
